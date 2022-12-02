@@ -1,0 +1,355 @@
+import numpy as np
+import random
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.manifold import MDS          # multidimensional scaling
+
+def rigid_transform_3D(A, B):
+    """
+    This function fits a rigid transform to a set of 3D points.
+
+    # Returns:
+    # R: 3×3 rotation matrix
+    # t: 3×1 translation column vector
+
+    :param A: 3xN matrices of points
+    :param B: 3xN matrices of points
+    :return: TODO
+    """
+
+    assert A.shape == B.shape
+
+    num_rows, num_cols = A.shape
+    if num_rows != 3:
+        raise Exception(f"matrix A is not 3xN, it is {num_rows}x{num_cols}")
+
+    num_rows, num_cols = B.shape
+    if num_rows != 3:
+        raise Exception(f"matrix B is not 3xN, it is {num_rows}x{num_cols}")
+
+    # find mean column wise
+    centroid_A = np.mean(A, axis=1)
+    #     print(centroid_A.shape, A.shape)
+    centroid_B = np.mean(B, axis=1)
+
+    # ensure centroids are 3x1
+    centroid_A = centroid_A.reshape(-1, 1)
+    #     print(centroid_A.shape, A.shape)
+    centroid_B = centroid_B.reshape(-1, 1)
+
+    # centre the points by subtracting the mean to remove translation components
+    Am = A - centroid_A
+    #     print(Am.shape)
+    Bm = B - centroid_B
+
+    # dot is matrix multiplication for array that finds the rotation from A to B
+    H = Am @ np.transpose(Bm)
+
+    # sanity check
+    # if linalg.matrix_rank(H) < 3:
+    #    raise ValueError("rank of H = {}, expecting 3".format(linalg.matrix_rank(H)))
+
+    # find rotation
+    U, S, Vt = np.linalg.svd(H)
+    #     print("Vt",Vt)
+    #     print("U",U)
+    R = Vt.T @ U.T
+
+    # special reflection case
+    if np.linalg.det(R) < 0:
+        print("det(R) < 0, reflection detected!, solution corrected for it")
+        Vt[2, :] *= -1
+        R = Vt.T @ U.T
+
+    t = -R @ (centroid_A + centroid_B)
+
+    #     print("Rotation",R)
+    #     print("translation",t)
+    #     print("centroidA", centroid_A.shape)
+    #     print("centroidB", centroid_B.shape)
+    return R, t
+
+
+def generate_random_seeds(seed, num_realizations, lower_bound, upper_bound):
+    """
+    :param seed: TODO
+    :param num_realizations: TODO
+    :param lower_bound: TODO
+    :param upper_bound: TODO
+    :return: TODO
+    """
+    random_seeds = []
+    random.seed(seed)              # random number seed is set to ensure reproducibility of same realization seeds,
+    # which is different for every iteration in the realization
+    for i in range(num_realizations):
+        random_value = random.randint(lower_bound, upper_bound)
+        random_seeds.append(random_value)
+    return random_seeds
+
+
+def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop_seed):
+
+    """
+    :param df: TODO
+    :param ns_features: TODO
+    :param num_realizations: maximum number of random samples
+    :param base_seed: TODO
+    :param start_seed: TODO
+    :param stop_seed: TODO
+    :return: TODO
+    """
+
+    # Arrays below store random values for every parameter changing using the utility functions defined later in the
+    # code for each realization
+    random_seeds = fn.generate_random_seeds(base_seed, num_realizations, start_seed, stop_seed)
+
+    mds1 = [] # MDS projection 1
+    mds2 = [] # MDS projection 2
+    all_real = [] # All realizations prepared for rigid transform
+    t = []
+    r = []
+    all_rmse = []
+    calc_real = [] # analytical estimation of each realization from R,T recovered
+
+    for i in range(0, num_realizations):
+        embedding_subset = MDS(n_components=2,n_init = 20,max_iter = 1000,random_state = random_seeds[i])
+        mds_transformed_subset = embedding_subset.fit_transform(df[ns_features])
+        mds1.append(mds_transformed_subset[:,0])
+        mds2.append(mds_transformed_subset[:,1])
+        real_i = np.column_stack((mds1[i],mds2[i],[0]*len(mds1[i]))) # stack projections for all realizations
+        all_real.append(real_i)
+
+    # Make the LD space invariant to  translation, rotation, reflection/flipping, This applies the proposed method to
+    # all realization and the base case individually to yield a unique solution.
+    for i in range(1,len(all_real)):
+        # Recover the rotation and translation matrices, R,T respectively for each realization
+        ret_R, ret_T = fn.rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+        t.append(ret_T)
+        r.append(ret_R)
+
+        # Compare the recovered R and T with the base case by creating a new coordinate scheme via prior
+        # solutions of r, and t
+        new_coord = (ret_R@np.transpose(all_real[i])) + ret_T
+        calc_real.append(new_coord)
+
+        # Find the rmse as an error check between corrected realization and base case
+        rmse_err = fn.rmse(new_coord, all_real[0])
+        all_rmse.append(rmse_err)
+    return random_seeds, all_real, calc_real, all_rmse
+
+
+def rmse(array1, array2):
+    """
+
+    :param array1: recovered realization "i" array from R, T calculation
+    :param array2: base case
+    :return: TODO
+    """
+
+    var1 = np.transpose(array1) - array2
+    var1 = var1 * var1
+    var1 = np.sum(var1)
+    rmse = np.sqrt(var1 / len(array1[0, :]))
+    return rmse
+
+
+def real_plotter(df, idx, response, array1, r_idx, random_seeds, Ax, Ay, title, x_off, y_off, cmap, array2=None):
+    """
+    :param df: TODO
+    :param idx: TODO
+    :param response: TODO
+    :param array1: TODO - all_real
+    :param r_idx: TODO - calc_real
+    :param random_seeds: TODO
+    :param Ax: TODO
+    :param Ay: TODO
+    :param title: TODO
+    :param x_off: TODO
+    :param y_off: TODO
+    :param cmap: TODO
+    :param array2: TODO
+    :return: TODO
+    """
+
+    # Basis for automated subplot
+    num_cols = 2
+    subplot_nos = len(r_idx)
+    if subplot_nos % num_cols == 0:
+        num_rows = subplot_nos // num_cols
+    else:
+        num_rows = (subplot_nos // num_cols) + 1
+
+    # Make Plots
+    plt.figure()
+
+    if array2 is None:
+        for i in range(0, len(r_idx)):
+            ax = plt.subplot(num_rows, num_cols, i + 1)
+            pairplot = sns.scatterplot(x=array1[i][:, 0], y=array1[i][:, 1], hue=df[response], s=60, markers='o',
+                                       palette=cmap, edgecolor="black", ax=ax)
+            pairplot.set_xlabel(Ax)
+            pairplot.set_ylabel(Ay)
+            pairplot.set_title( title[i] + str(r_idx[i]) + " at seed " + str(random_seeds[i]))
+            for j, txt in enumerate(df[idx]):
+                pairplot.annotate(txt, (array1[i][:, 0][j]+x_off, array1[i][:, 1][j]+y_off), size=10, style='italic')
+
+    else:
+        for k in range(1, len(r_idx)):
+            ax = plt.subplot(num_rows, num_cols, k)
+            pairplot = sns.scatterplot(x=array2[k][0], y=array2[k][1], hue=df[response], s=60, markers='o',
+                                       palette=cmap, edgecolor="black", ax=ax)
+            pairplot.set_xlabel(Ax)
+            pairplot.set_ylabel(Ay)
+            pairplot.set_title("Stabilized solution for " + title[k].lower() + str(r_idx[k]) + " at seed " +
+                               str(random_seeds[k-1]))
+            for l, txt in enumerate(df[idx]):
+                pairplot.annotate(txt, (array2[k][0][l]+x_off, array2[k][1][l]+y_off),size=10, style='italic')
+
+        # Add base case to subplot for direct comparison of stabilized solution obtained
+        ax = plt.subplot(num_rows, num_cols, k+1)
+        pairplot = sns.scatterplot(x=array1[0][:, 0], y=array1[0][:, 1],hue = df[response], s=60, markers='o',
+                                   palette=cmap, edgecolor="black", ax=ax)
+        pairplot.set_xlabel(Ax)
+        pairplot.set_ylabel(Ay)
+        pairplot.set_title(title[0] + str(r_idx[0]) + " at seed " + str(random_seeds[0]))
+
+    # Figure info
+    ax.set_aspect('auto')
+    ax.legend(fontsize=11)
+    ax.tick_params(axis='both', which='major', labelsize=12)
+
+    # Aesthetics
+    plt.subplots_adjust(left=0.0, bottom=0.0, right=2., top=2., wspace=0.3, hspace=0.3,)
+    plt.savefig( 'Variations with seeds 2x2 for data subset with tracking.tiff', dpi=300, bbox_inches='tight')
+    plt.show()
+    return
+
+
+def expectation(array1, array2, r_idx, Ax, Ay, verbose=False):
+    """
+    :param array1: TODO - all_real
+    :param array2: TODO - calc_real
+    :param r_idx: TODO - base case realization index
+    :param Ax: TODO
+    :param Ay: TODO
+    :param verbose: TODO
+    :return: TODO - expectation of all the calc_real
+    """
+
+    # Base case
+    sig_x = np.var(array1[r_idx][:, 0])
+    sig_y = np.var(array1[r_idx][:, 1])
+    sig_eff = sig_x + sig_y
+
+    # Expectation of stabilized solution over all realizations for each sample
+    E = np.mean(array2, axis=0)
+    sigma_x = np.var(E[0, :])
+    sigma_y = np.var(E[1, :])
+    sigma_eff = sigma_x + sigma_y
+
+    if verbose:
+        print("The effective variance of the base case is", round(sig_eff, 4), "with a " + Ax + " variance of",
+              round(sig_x, 4), " and " + Ay + " variance of", round(sig_y, 4))
+        print("\nThe effective variance of the expected stabilized solution is", round(sigma_eff,4), "with a " + Ax +
+              " variance of", round(sigma_x, 4), " and " + Ay + " variance of", round(sigma_y, 4))
+    return E
+
+
+def E_plotter(array1, array_exp, r_idx, Lx, Ly, xmin, xmax, ymin, ymax):
+   """
+   :param array1: TODO - all_real
+   :param array_exp: TODO - expectation array
+   :param r_idx: TODO - base case index
+   :param Lx: TODO - x-axis label
+   :param Ly: TODO - y-axis label
+   :param xmin: TODO
+   :param xmax: TODO
+   :param ymin: TODO
+   :param ymax: TODO
+   :return: TODO
+   """
+
+    # For x-direction projection in LD space
+    sns.kdeplot(array1[r_idx][:, 0], label='Base case ' + Lx, color='blue')
+    sns.kdeplot(array_exp[0, :], label=Lx + ' stabilized expectation', color='magenta', alpha=0.4)
+
+    # For y-direction projection in LD space
+    sns.kdeplot(array1[r_idx][:, 1], label= 'Base case ' + Ly, color= 'green')
+    sns.kdeplot(array_exp[1, :], label=Ly + ' stabilized expectation', color='orange', alpha=0.4)
+
+    # if xmin or xmax or ymin or ymax is not None:
+    #     # For expectation
+    #     e1_min = np.min(array_exp[0, :])
+    #     e1_max = np.max(array_exp[0, :])
+    #     e2_min = np.min(array_exp[1, :])
+    #     e2_max = np.max(array_exp[1, :])
+    #
+    #     # For projections
+    #     p1_min = np.min(array1[r_idx][:, 0])
+    #     p1_max = np.max(array1[r_idx][:, 0])
+    #     p2_min = np.min(array1[r_idx][:, 1])
+    #     p2_max = np.max(array1[r_idx][:, 1])
+    #
+    #     # Get xmin and xmax limits
+    #     xmin=min(e1_min, e2_min, p1_min, p2_min)
+    #     xmax=max(e1_max, e2_max, p1_max, p2_max)
+    #       # Get ymin and ymax limits
+    #       ymin= 0.0 # since KDE yields a PDF
+    #       ymax= 1.0 # since KDE yields a PDF
+
+    sns.set_style('white')
+    plt.legend(loc="best", fontsize=14)
+    plt.xlabel('Projections', fontsize=14)
+    plt.ylabel('Density', fontsize=14)
+    plt.xlim(xmin,xmax)
+    plt.ylim(ymin,ymax)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.subplots_adjust(left=0.0, bottom=0.5, right=1.2, top=2.0, wspace=0.25, hspace=0.3)
+    plt.savefig('Comparisons for projections between stabilized solutions and base case distributions.tiff', dpi=300,
+                bbox_inches='tight')
+    plt.show()
+    return
+
+
+def compare_plot(df, idx, response, array1, r_idx, num_realizations, array_exp, random_seeds, Ax, Ay, x_off, y_off,
+                 cmap):
+    """
+    :param df: TODO
+    :param idx: TODO
+    :param response: TODO
+    :param array1: TODO
+    :param r_idx: TODO
+    :param num_realizations: TODO
+    :param array_exp: TODO
+    :param random_seeds: TODO
+    :param Ax: TODO
+    :param Ay: TODO
+    :param x_off: TODO
+    :param y_off: TODO
+    :param cmap: TODO
+    :return: TODO
+    """
+
+    plt.subplot(121)
+    pairplot = sns.scatterplot(x=array1[r_idx][:, 0], y=array1[r_idx][:, 1], hue=df[response], s=60, markers='o',
+                               palette=cmap, edgecolor="black")
+    for i, txt in enumerate(df[idx]):
+        pairplot.annotate(txt, (array1[r_idx][:,0][i]+x_off, array1[r_idx][:,1][i]+y_off),size=10, style='italic')
+    pairplot.set_xlabel(Ax)
+    pairplot.set_ylabel(Ay)
+    pairplot.set_title("Base case realization at seed " + str(random_seeds[r_idx]))
+
+    plt.subplot(122)
+    pairplot = sns.scatterplot(x=array_exp[0, :], y=array_exp[1, :], hue=df[response], s=60, markers='o', palette=cmap,
+                               edgecolor="black")
+    for i, txt in enumerate(df[idx]):
+        pairplot.annotate(txt, (array_exp[0, :][i]+x_off, array_exp[1, :][i]+y_off), size=10, style='italic')
+    pairplot.set_xlabel(Ax)
+    pairplot.set_ylabel(Ay)
+    pairplot.set_title("Expectation of Stabilized Solutions over " + str(num_realizations) + " realizations") # subtract
+    # num_realizations from 1 since base case is a realization too?!
+
+    plt.subplots_adjust(left=0.0, bottom=0.0, right=2., top=1., wspace=0.3, hspace=0.3,)
+    plt.savefig( 'Stabilized independent result vs expectation of stabilized results.tiff', dpi=300, bbox_inches='tight')
+    plt.show()
+    return
