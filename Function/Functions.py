@@ -3,6 +3,32 @@ import random
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.manifold import MDS          # multidimensional scaling
+from sklearn.preprocessing import MinMaxScaler
+
+def Normalizer(df_original, feats):
+    """
+
+    This function normalizes the dataframe of choice between [0.01,1]
+
+    Arguments
+    ---------
+    df: a dataframe consiting of features to be normalized
+
+    feats: a list consiting of features column names to be normalized
+
+    """
+    df = df_original.copy()
+    x = df.loc[:, feats].values
+    scaler = MinMaxScaler(feature_range=(0.01, 1))
+    xs = scaler.fit_transform(x)
+
+    ns_feats = []
+    for i in range(0, len(feats)):
+        df['NS_' + feats[i]] = xs[:, i]
+        ns_feats.append('NS_' + feats[i])
+
+    return df
+
 
 def rigid_transform_3D(A, B):
     """
@@ -101,7 +127,7 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
 
     # Arrays below store random values for every parameter changing using the utility functions defined later in the
     # code for each realization
-    random_seeds = fn.generate_random_seeds(base_seed, num_realizations, start_seed, stop_seed)
+    random_seeds = generate_random_seeds(base_seed, num_realizations, start_seed, stop_seed)
 
     mds1 = [] # MDS projection 1
     mds2 = [] # MDS projection 2
@@ -123,7 +149,7 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
     # all realization and the base case individually to yield a unique solution.
     for i in range(1,len(all_real)):
         # Recover the rotation and translation matrices, R,T respectively for each realization
-        ret_R, ret_T = fn.rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+        ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
         t.append(ret_T)
         r.append(ret_R)
 
@@ -133,7 +159,7 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
         calc_real.append(new_coord)
 
         # Find the rmse as an error check between corrected realization and base case
-        rmse_err = fn.rmse(new_coord, all_real[0])
+        rmse_err = rmse(new_coord, all_real[0])
         all_rmse.append(rmse_err)
     return random_seeds, all_real, calc_real, all_rmse
 
@@ -270,12 +296,12 @@ def E_plotter(array1, array_exp, r_idx, Lx, Ly, xmin, xmax, ymin, ymax):
    """
 
     # For x-direction projection in LD space
-    sns.kdeplot(array1[r_idx][:, 0], label='Base case ' + Lx, color='blue')
-    sns.kdeplot(array_exp[0, :], label=Lx + ' stabilized expectation', color='magenta', alpha=0.4)
+   sns.kdeplot(array1[r_idx][:, 0], label='Base case ' + Lx, color='blue')
+   sns.kdeplot(array_exp[0, :], label=Lx + ' stabilized expectation', color='magenta', alpha=0.4)
 
     # For y-direction projection in LD space
-    sns.kdeplot(array1[r_idx][:, 1], label= 'Base case ' + Ly, color= 'green')
-    sns.kdeplot(array_exp[1, :], label=Ly + ' stabilized expectation', color='orange', alpha=0.4)
+   sns.kdeplot(array1[r_idx][:, 1], label= 'Base case ' + Ly, color= 'green')
+   sns.kdeplot(array_exp[1, :], label=Ly + ' stabilized expectation', color='orange', alpha=0.4)
 
     # if xmin or xmax or ymin or ymax is not None:
     #     # For expectation
@@ -297,18 +323,18 @@ def E_plotter(array1, array_exp, r_idx, Lx, Ly, xmin, xmax, ymin, ymax):
     #       ymin= 0.0 # since KDE yields a PDF
     #       ymax= 1.0 # since KDE yields a PDF
 
-    sns.set_style('white')
-    plt.legend(loc="best", fontsize=14)
-    plt.xlabel('Projections', fontsize=14)
-    plt.ylabel('Density', fontsize=14)
-    plt.xlim(xmin,xmax)
-    plt.ylim(ymin,ymax)
-    plt.tick_params(axis='both', which='major', labelsize=12)
-    plt.subplots_adjust(left=0.0, bottom=0.5, right=1.2, top=2.0, wspace=0.25, hspace=0.3)
-    plt.savefig('Comparisons for projections between stabilized solutions and base case distributions.tiff', dpi=300,
-                bbox_inches='tight')
-    plt.show()
-    return
+   sns.set_style('white')
+   plt.legend(loc="best", fontsize=14)
+   plt.xlabel('Projections', fontsize=14)
+   plt.ylabel('Density', fontsize=14)
+   plt.xlim(xmin,xmax)
+   plt.ylim(ymin,ymax)
+   plt.tick_params(axis='both', which='major', labelsize=12)
+   plt.subplots_adjust(left=0.0, bottom=0.5, right=1.2, top=2.0, wspace=0.25, hspace=0.3)
+   plt.savefig('Comparisons for projections between stabilized solutions and base case distributions.tiff', dpi=300,
+               bbox_inches='tight')
+   plt.show()
+   return
 
 
 def compare_plot(df, idx, response, array1, r_idx, num_realizations, array_exp, random_seeds, Ax, Ay, x_off, y_off,
