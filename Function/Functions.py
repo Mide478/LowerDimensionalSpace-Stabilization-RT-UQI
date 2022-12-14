@@ -1,9 +1,12 @@
 import numpy as np
 import random
+import math
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.manifold import MDS          # multidimensional scaling
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from shapely.geometry import Polygon, Point
+from scipy.spatial import ConvexHull
 
 def Normalizer(df_original, feats):
     """
@@ -12,15 +15,42 @@ def Normalizer(df_original, feats):
 
     Arguments
     ---------
-    df: a dataframe consiting of features to be normalized
+    df: a dataframe consisting of features to be normalized
 
-    feats: a list consiting of features column names to be normalized
+    feats: a list consisting of features column names to be normalized
 
     """
     df = df_original.copy()
     x = df.loc[:, feats].values
     scaler = MinMaxScaler(feature_range=(0.01, 1))
     xs = scaler.fit_transform(x)
+
+    ns_feats = []
+    for i in range(0, len(feats)):
+        df['NS_' + feats[i]] = xs[:, i]
+        ns_feats.append('NS_' + feats[i])
+
+    return df
+
+
+def Standardizer(df_original, feats):
+    """
+
+    This function standardizes  the dataframe of choice to a mean of 0 and variance of 1 whilst preserving its natural
+    distribution shape.
+
+    Arguments
+    ---------
+    df: a dataframe consisting of features to be normalized
+
+    feats: a list consisting of features column names to be normalized
+
+    """
+    df = df_original.copy()
+    x = df.loc[:, feats].values
+    mu = np.mean(x, axis=0)
+    sd = np.std(x, axis=0)
+    xs = StandardScaler().fit_transform(x)
 
     ns_feats = []
     for i in range(0, len(feats)):
@@ -379,3 +409,60 @@ def compare_plot(df, idx, response, array1, r_idx, num_realizations, array_exp, 
     plt.savefig( 'Stabilized independent result vs expectation of stabilized results.tiff', dpi=300, bbox_inches='tight')
     plt.show()
     return
+
+
+# check if data is a convex polygon
+def is_convex_polygon(polygon):
+    """Return True if the polynomial defined by the sequence of 2D
+    points is 'strictly convex': points are valid, side lengths non-
+    zero, interior angles are strictly between zero and a straight
+    angle, and the polygon does not intersect itself.
+
+    NOTES:  1.  Algorithm: the signed changes of the direction angles
+                from one side to the next side must be all positive or
+                all negative, and their sum must equal plus-or-minus
+                one full turn (2 pi radians). Also check for too few,
+                invalid, or repeated points.
+            2.  No check is explicitly done for zero internal angles
+                (180 degree direction-change angle) as this is covered
+                in other ways, including the `n < 3` check.
+    """
+
+    TWO_PI = 2 * math.pi
+    try:  # needed for any bad points or direction changes
+        # Check for too few points
+        if len(polygon) < 3:
+            return False
+        # Get starting information
+        old_x, old_y = polygon[-2]
+        new_x, new_y = polygon[-1]
+        new_direction = math.atan2(new_y - old_y, new_x - old_x)
+        angle_sum = 0.0
+        # Check each point (the side ending there, its angle) and accum. angles
+        for ndx, newpoint in enumerate(polygon):
+            # Update point coordinates and side directions, check side length
+            old_x, old_y, old_direction = new_x, new_y, new_direction
+            new_x, new_y = newpoint
+            new_direction = math.atan2(new_y - old_y, new_x - old_x)
+            if old_x == new_x and old_y == new_y:
+                return False  # repeated consecutive points
+            # Calculate & check the normalized direction-change angle
+            angle = new_direction - old_direction
+            if angle <= -math.pi:
+                angle += TWO_PI  # make it in half-open interval (-Pi, Pi]
+            elif angle > math.pi:
+                angle -= TWO_PI
+            if ndx == 0:  # if first time through loop, initialize orientation
+                if angle == 0.0:
+                    return False
+                orientation = 1.0 if angle > 0.0 else -1.0
+            else:  # if other time through loop, check orientation is stable
+                if orientation * angle <= 0.0:  # not both pos. or both neg.
+                    return False
+            # Accumulate the direction-change angle
+            angle_sum += angle
+        # Check that the total number of full turns is plus-or-minus 1
+        return abs(round(angle_sum / TWO_PI)) == 1
+    except (ArithmeticError, TypeError, ValueError):
+        return True
+        # return False # any exception means not a proper convex polygon
