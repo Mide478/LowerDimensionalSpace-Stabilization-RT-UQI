@@ -161,6 +161,7 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
 
     mds1 = [] # MDS projection 1
     mds2 = [] # MDS projection 2
+    norm_stress = []
     all_real = [] # All realizations prepared for rigid transform
     t = []
     r = []
@@ -170,6 +171,10 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
     for i in range(0, num_realizations):
         embedding_subset = MDS(n_components=2,n_init = 20,max_iter = 1000,random_state = random_seeds[i])
         mds_transformed_subset = embedding_subset.fit_transform(df[ns_features])
+        raw_stress = embedding_subset.stress_
+        dissimilarity_matrix = embedding_subset.dissimilarity_matrix_
+        stress_1 = np.sqrt(raw_stress / (0.5 * np.sum(dissimilarity_matrix**2)))
+        norm_stress.append(stress_1)
         mds1.append(mds_transformed_subset[:,0])
         mds2.append(mds_transformed_subset[:,1])
         real_i = np.column_stack((mds1[i],mds2[i],[0]*len(mds1[i]))) # stack projections for all realizations
@@ -191,7 +196,7 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
         # Find the rmse as an error check between corrected realization and base case
         rmse_err = rmse(new_coord, all_real[0])
         all_rmse.append(rmse_err)
-    return random_seeds, all_real, calc_real, all_rmse
+    return random_seeds, all_real, calc_real, all_rmse, norm_stress
 
 
 def rmse(array1, array2):
