@@ -583,10 +583,10 @@ def rotation_variation(array, response, dataframe, palette_):
 
     # Palette assignment
     if palette_ == 1:
-        palette_ = sns.color_palette("rocket_r", n_colors=len(np.unique(df[response].values)))
+        palette_ = sns.color_palette("rocket_r", n_colors=len(np.unique(df[response].values))+1)
 
     elif palette_ == 2:
-        palette_ = sns.color_palette("bright", n_colors=len(np.unique(df[response].values)))
+        palette_ = sns.color_palette("bright", n_colors=len(np.unique(df[response].values))+1)
 
     else:
         palette_ = None
