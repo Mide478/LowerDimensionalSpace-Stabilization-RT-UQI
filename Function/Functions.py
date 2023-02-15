@@ -33,34 +33,34 @@ def Normalizer(df_original, feats):
     return df
 
 
-def Standardizer(df_original, feats):
-    """
+# def Standardizer(df_original, feats):
+#     """
+#
+#     This function standardizes  the dataframe of choice to a mean of 0 and variance of 1 whilst preserving its natural
+#     distribution shape.
+#
+#     Arguments
+#     ---------
+#     df: a dataframe consisting of features to be normalized
+#
+#     feats: a list consisting of features column names to be normalized
+#
+#     """
+#     df = df_original.copy()
+#     x = df.loc[:, feats].values
+#     mu = np.mean(x, axis=0)
+#     sd = np.std(x, axis=0)
+#     xs = StandardScaler().fit_transform(x)
+#
+#     ns_feats = []
+#     for i in range(0, len(feats)):
+#         df['NS_' + feats[i]] = xs[:, i]
+#         ns_feats.append('NS_' + feats[i])
+#
+#     return df
 
-    This function standardizes  the dataframe of choice to a mean of 0 and variance of 1 whilst preserving its natural
-    distribution shape.
 
-    Arguments
-    ---------
-    df: a dataframe consisting of features to be normalized
-
-    feats: a list consisting of features column names to be normalized
-
-    """
-    df = df_original.copy()
-    x = df.loc[:, feats].values
-    mu = np.mean(x, axis=0)
-    sd = np.std(x, axis=0)
-    xs = StandardScaler().fit_transform(x)
-
-    ns_feats = []
-    for i in range(0, len(feats)):
-        df['NS_' + feats[i]] = xs[:, i]
-        ns_feats.append('NS_' + feats[i])
-
-    return df
-
-
-def rigid_transform_3D(A, B):
+def rigid_transform_3D(A, B, verbose=False):
     """
     This function fits a rigid transform to a set of 3D points.
 
@@ -70,6 +70,7 @@ def rigid_transform_3D(A, B):
 
     :param A: 3xN matrices of points
     :param B: 3xN matrices of points
+    :param verbose: TODO
     :return: TODO
     """
 
@@ -112,7 +113,7 @@ def rigid_transform_3D(A, B):
     R = Vt.T @ U.T
 
     # special reflection case
-    if np.linalg.det(R) < 0:
+    if np.linalg.det(R) < 0 and verbose:
         print("det(R) < 0, reflection detected!, solution corrected for it")
         Vt[2, :] *= -1
         R = Vt.T @ U.T
@@ -174,7 +175,7 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
         raw_stress = embedding_subset.stress_
         dissimilarity_matrix = embedding_subset.dissimilarity_matrix_
         stress_1 = np.sqrt(raw_stress / (0.5 * np.sum(dissimilarity_matrix**2)))
-        norm_stress.append(stress_1)
+        norm_stress.append(stress_1) # [Poor > 0.2 > Fair > 0.1 > Good > 0.05 > Excellent > 0.025 > Perfect > 0.0]
         mds1.append(mds_transformed_subset[:,0])
         mds2.append(mds_transformed_subset[:,1])
         real_i = np.column_stack((mds1[i],mds2[i],[0]*len(mds1[i]))) # stack projections for all realizations
@@ -471,3 +472,128 @@ def is_convex_polygon(polygon):
     except (ArithmeticError, TypeError, ValueError):
         return True
         # return False # any exception means not a proper convex polygon
+
+
+
+def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_adj, wspace, hspace, title, palette_,
+                   hue_=None):
+    """
+    This function plots the matrix scatter plot for the given data.
+
+    Arguments
+    ---------
+
+    dataframe: dataframe
+
+    feat_title: a list consisting of a string column names for each predictor feature of choice
+
+    left_adj: float values that adjusts the left placement of the scatter plot
+
+    bottom_adj: float values that adjusts the bottom placement of the scatter plot
+
+    right_adj: float values that adjusts the right placement of the scatter plot
+
+    top_adj: float values that adjusts the top placement of the scatter plot
+
+    wspace: float values that adjusts the width placement of the scatter plot
+
+    hspace: float values that adjusts the height placement of the scatter plot
+
+    title: a string consisting of the name of the figure
+
+    palette_: an integer that assigns a dictionary of colors that maps the hue variable consisting of the
+    classification label
+
+    hue_: string variable that is used to color matrix scatter plot made
+    """
+
+    # Hue assignment
+    if hue_ is not None:
+        hue_ = hue_
+
+        # Palette assignment
+        if palette_ == 1:
+            palette_ = sns.color_palette("rocket_r", n_colors=len(dataframe[hue_].unique()))
+
+        elif palette_ == 2:
+            palette_ = sns.color_palette("bright", n_colors=len(dataframe[hue_].unique()))
+        else:
+            palette_ = None
+
+    else:
+        hue_ is None
+
+        # Palette assignment
+        if palette_ == 1:
+            palette_ = sns.color_palette("rocket_r")
+
+        elif palette_ == 2:
+            palette_ = sns.color_palette("bright")
+        else:
+            palette_ = None
+
+    sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor':'black'},
+                 plot_kws=dict(s=50, edgecolor="black", linewidth=0.5),hue=hue_, corner=True,
+                 palette=palette_)
+    plt.subplots_adjust(left=left_adj, bottom=bottom_adj, right=right_adj, top=top_adj, wspace=wspace, hspace=hspace)
+    plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+    plt.show()
+    return
+
+
+def standardizer(dataset, features, keep_only_std_features=False):
+    """
+    This function standardizes  the dataframe of choice to a mean of 0 and variance of 1 whilst preserving its natural
+    distribution shape.
+
+    Arguments
+    ---------
+    dataset: DataFrame
+        A pandas.DataFrame containing the features of interest
+    features: list
+        A list consisting of features column names to be normalized
+    keep_only_std_features: bool
+        True to discard non-normalized features.
+    """
+
+    is_string = isinstance(features, str)
+    if is_string:
+        features = [features]
+
+    df = dataset.copy()
+    x = df.loc[:, features].values
+    mu = np.mean(x, axis=0)
+    sd = np.std(x, axis=0)
+    xs = StandardScaler().fit_transform(x)
+
+    ns_feats = []
+    for i, feature in enumerate(features):
+        df['NS_' + feature] = xs[:, i]
+        ns_feats.append('NS_' + feature)
+
+    if keep_only_std_features:
+        df = df.loc[:, ns_feats]
+
+    return df
+
+
+def rotation_variation(array, response, dataframe, palette_):
+
+    df = dataframe.copy(deep=True)
+
+    # Palette assignment
+    if palette_ == 1:
+        palette_ = sns.color_palette("rocket_r", n_colors=len(np.unique(df[response].values)))
+
+    elif palette_ == 2:
+        palette_ = sns.color_palette("bright", n_colors=len(np.unique(df[response].values)))
+
+    else:
+        palette_ = None
+
+    for i in range(0,len(array)):
+        mds1_vec = array[i][:,0]
+        mds2_vec = array[i][:,1]
+        sns.scatterplot(x=mds1_vec, y=mds2_vec, hue=df[response], s=60, markers='o', alpha=0.1,
+                        palette=palette_, edgecolor="black", legend=False)
+    return
