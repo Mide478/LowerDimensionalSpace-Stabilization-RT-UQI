@@ -313,27 +313,7 @@ def E_plotter(array1, array_exp, r_idx, Lx, Ly, xmin, xmax, ymin, ymax):
    sns.kdeplot(array1[r_idx][:, 1], label= 'Base case ' + Ly, color= 'green')
    sns.kdeplot(array_exp[1, :], label=Ly + ' stabilized expectation', color='orange', alpha=0.4)
 
-    # if xmin or xmax or ymin or ymax is not None:
-    #     # For expectation
-    #     e1_min = np.min(array_exp[0, :])
-    #     e1_max = np.max(array_exp[0, :])
-    #     e2_min = np.min(array_exp[1, :])
-    #     e2_max = np.max(array_exp[1, :])
-    #
-    #     # For projections
-    #     p1_min = np.min(array1[r_idx][:, 0])
-    #     p1_max = np.max(array1[r_idx][:, 0])
-    #     p2_min = np.min(array1[r_idx][:, 1])
-    #     p2_max = np.max(array1[r_idx][:, 1])
-    #
-    #     # Get xmin and xmax limits
-    #     xmin=min(e1_min, e2_min, p1_min, p2_min)
-    #     xmax=max(e1_max, e2_max, p1_max, p2_max)
-    #       # Get ymin and ymax limits
-    #       ymin= 0.0 # since KDE yields a PDF
-    #       ymax= 1.0 # since KDE yields a PDF
-
-   # sns.set_style('white')
+    # Aesthetics
    plt.legend(loc="best", fontsize=14)
    plt.xlabel('Projections', fontsize=14)
    plt.ylabel('Density', fontsize=14)
@@ -648,7 +628,46 @@ def visual_model_check(dataframe, features, fig_name, expectation_array):
     plt.ylabel("Frequency")
     plt.title("Pairwise Distance: Projected to 2 Components")
 
+    # Aesthetics
     plt.subplots_adjust(left=0.0, bottom=0.0, right=1.7, top=2.3, wspace=0.2, hspace=0.3)
     plt.savefig(fig_name + '.tiff', dpi=300, bbox_inches='tight')
     plt.show()
     return
+
+def convex_hull(array, title, x_off, y_off, Ax, Ay):
+
+    # Using samples from either n-case or n+1 case scenario to make a convex hull i.e., convex polygon
+    my_points = array[0][:,:2] # all samples in projected space
+    hull = ConvexHull(my_points)
+
+    # Check for point in polygon
+    vertices = my_points[hull.vertices] # the anchors as an array
+    # plt.scatter(my_points[hull.vertices][:,0], my_points[hull.vertices][:,1]) # vertices only in normalized space
+    polygon = Polygon(vertices)
+
+    # check if data is a strict convex polygon
+    binary_bool = fn.is_convex_polygon(polygon)
+    if binary_bool is False:
+        return "Convex polygon assumption not met, do not use this workflow"
+
+    else:
+        # Make sample point visuals
+        plt.scatter(my_points[:,0], my_points[:,1],marker='o', s=50, color='blue', edgecolors="black")
+
+        # Annotate sample index
+        for index, label in enumerate(range(1,len(my_points[:,0])+1)):
+            plt.annotate(label, (my_points[:,0][index]+x_off, my_points[:,1][index]+y_off), size=8, style='italic')
+
+        # Make figure to visualize convex hull polygon and highlight polygon formed
+        for simplex in hull.simplices:
+            plt.plot(my_points[simplex, 0], my_points[simplex, 1], 'r--') # k-
+            plt.fill(my_points[hull.vertices, 0], my_points[hull.vertices, 1], c='yellow', alpha=0.01)
+
+        # Aesthetics
+        plt.title(title)
+        plt.xlabel(Ax)
+        plt.ylabel(Ay)
+        plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+        plt.show()
+        return my_points, hull, vertices, polygon
+
