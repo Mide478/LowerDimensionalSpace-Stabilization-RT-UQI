@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.manifold import MDS          # multidimensional scaling
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.metrics.pairwise import euclidean_distances
 from shapely.geometry import Polygon, Point
 from scipy.spatial import ConvexHull
 
@@ -31,33 +32,6 @@ def Normalizer(df_original, feats):
         ns_feats.append('NS_' + feats[i])
 
     return df
-
-
-# def Standardizer(df_original, feats):
-#     """
-#
-#     This function standardizes  the dataframe of choice to a mean of 0 and variance of 1 whilst preserving its natural
-#     distribution shape.
-#
-#     Arguments
-#     ---------
-#     df: a dataframe consisting of features to be normalized
-#
-#     feats: a list consisting of features column names to be normalized
-#
-#     """
-#     df = df_original.copy()
-#     x = df.loc[:, feats].values
-#     mu = np.mean(x, axis=0)
-#     sd = np.std(x, axis=0)
-#     xs = StandardScaler().fit_transform(x)
-#
-#     ns_feats = []
-#     for i in range(0, len(feats)):
-#         df['NS_' + feats[i]] = xs[:, i]
-#         ns_feats.append('NS_' + feats[i])
-#
-#     return df
 
 
 def rigid_transform_3D(A, B, verbose=False):
@@ -359,7 +333,7 @@ def E_plotter(array1, array_exp, r_idx, Lx, Ly, xmin, xmax, ymin, ymax):
     #       ymin= 0.0 # since KDE yields a PDF
     #       ymax= 1.0 # since KDE yields a PDF
 
-   sns.set_style('white')
+   # sns.set_style('white')
    plt.legend(loc="best", fontsize=14)
    plt.xlabel('Projections', fontsize=14)
    plt.ylabel('Density', fontsize=14)
@@ -577,9 +551,22 @@ def standardizer(dataset, features, keep_only_std_features=False):
     return df
 
 
-def rotation_variation(array, response, dataframe, palette_):
+def bivariate_plotter(array, palette_, response, title, plot_type, dataframe, Ax, Ay):
+    """
+
+    :param array:
+    :param palette_:
+    :param response:
+    :param title:
+    :param plot_type:
+    :param dataframe:
+    :param Ax:
+    :param Ay:
+    :return:
+    """
 
     df = dataframe.copy(deep=True)
+    plot_type = plot_type.lower()
 
     # Palette assignment
     if palette_ == 1:
@@ -592,8 +579,76 @@ def rotation_variation(array, response, dataframe, palette_):
         palette_ = None
 
     for i in range(0,len(array)):
-        mds1_vec = array[i][:,0]
-        mds2_vec = array[i][:,1]
-        sns.scatterplot(x=mds1_vec, y=mds2_vec, hue=df[response], s=60, markers='o', alpha=0.1,
+        if plot_type == 'variation':
+            mds1_vec = array[i][:,0]
+            mds2_vec = array[i][:,1]
+
+        elif plot_type == 'jitters':
+            mds1_vec = np.transpose(array[i][0, :])
+            mds2_vec = np.transpose(array[i][1, :])
+        else:
+            print("Use a plot_type of variation or jitters")
+
+        pairplot=sns.scatterplot(x=mds1_vec, y=mds2_vec, hue=df[response], s=60, markers='o', alpha=0.1,
                         palette=palette_, edgecolor="black", legend=False)
+        pairplot.set_xlabel(Ax)
+        pairplot.set_ylabel(Ay)
+        pairplot.set_title(title)
+        plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+    return
+
+def visual_model_check(dataframe, features, fig_name, expectation_array):
+    """
+
+    :param dataframe:
+    :param features:
+    :param fig_name:
+    :param expectation_array:
+    :return:
+    """
+
+    # Obtain dataframe with the standardized predictor features
+    df = dataframe[features]
+
+    # Grab the expectation of the stabilized solution
+    stabilized_expected_proj = np.transpose(expectation_array[:2, :])
+
+    # insert distortion visual
+    dists = euclidean_distances(df, squared=False).ravel()
+    nonzero = dists != 0   # select only non-identical samples pairs
+    dists = dists[nonzero]
+    projected_dists = euclidean_distances(stabilized_expected_proj, squared=False).ravel()[nonzero]
+
+    plt.subplot(221)
+    plt.scatter(dists,projected_dists,c='red',alpha=0.2,edgecolor = 'black')
+    plt.arrow(0,0,200,200,width=0.02,color='black',head_length=0.0,head_width=0.0)
+    plt.xlim(0,15); plt.ylim(0,15)
+    plt.xlabel("Pairwise Distance: original space")
+    plt.ylabel("Pairwise Distance: projected space")
+    plt.title("Pairwise Distance: Projected to 2 components")
+
+    rates = projected_dists / dists
+    print("Distance Ratio, mean: %0.4f, standard deviation %0.4f." % (np.mean(rates), np.std(rates)))
+
+    plt.subplot(222)
+    plt.hist(rates, bins=50, range=(0.5, 1.5),color = 'red', alpha = 0.2, edgecolor='k')
+    plt.xlabel("Distance Ratio: projected / original")
+    plt.ylabel("Frequency")
+    plt.title("Pairwise Distance: Projected to 2 Components")
+
+    plt.subplot(223)
+    plt.hist(dists, bins=50, range=(0., 15.),color = 'red', alpha = 0.2, edgecolor='k')
+    plt.xlabel("Pairwise Distance")
+    plt.ylabel("Frequency")
+    plt.title("Pairwise Distance: Original Data")
+
+    plt.subplot(224)
+    plt.hist(projected_dists, bins=50, range=(0., 15.),color = 'red', alpha = 0.2, edgecolor='k')
+    plt.xlabel("Pairwise Distance")
+    plt.ylabel("Frequency")
+    plt.title("Pairwise Distance: Projected to 2 Components")
+
+    plt.subplots_adjust(left=0.0, bottom=0.0, right=1.7, top=2.3, wspace=0.2, hspace=0.3)
+    plt.savefig(fig_name + '.tiff', dpi=300, bbox_inches='tight')
+    plt.show()
     return
