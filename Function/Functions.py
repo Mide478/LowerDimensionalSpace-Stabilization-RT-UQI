@@ -10,6 +10,8 @@ from shapely.geometry import Polygon, Point
 from scipy.spatial import ConvexHull
 from scipy.stats import norm
 import matplotlib.patches as mpatches
+from pydist2.distance import pdist1
+from scipy.spatial import distance
 
 
 def Normalizer(df_original, feats):
@@ -121,34 +123,111 @@ def generate_random_seeds(seed, num_realizations, lower_bound, upper_bound):
     return random_seeds
 
 
-def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop_seed):
+# def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop_seed):
+#
+#     """
+#     :param df: TODO
+#     :param ns_features: TODO
+#     :param num_realizations: maximum number of random samples
+#     :param base_seed: TODO
+#     :param start_seed: TODO
+#     :param stop_seed: TODO
+#     :return: TODO
+#     """
+#
+#     # Arrays below store random values for every parameter changing using the utility functions defined later in the
+#     # code for each realization
+#     random_seeds = generate_random_seeds(base_seed, num_realizations, start_seed, stop_seed)
+#
+#     mds1 = [] # MDS projection 1
+#     mds2 = [] # MDS projection 2
+#     norm_stress = []
+#     all_real = [] # All realizations prepared for rigid transform
+#     t = []
+#     r = []
+#     all_rmse = []
+#     calc_real = []  # analytical estimation of each realization from R,T recovered
+#
+#     for i in range(0, num_realizations):
+#         embedding_subset = MDS(n_components=2, n_init=20, max_iter=1000, random_state=random_seeds[i])
+#         mds_transformed_subset = embedding_subset.fit_transform(df[ns_features])
+#         raw_stress = embedding_subset.stress_
+#         dissimilarity_matrix = embedding_subset.dissimilarity_matrix_
+#         stress_1 = np.sqrt(raw_stress / (0.5 * np.sum(dissimilarity_matrix**2)))
+#         norm_stress.append(stress_1) # [Poor > 0.2 > Fair > 0.1 > Good > 0.05 > Excellent > 0.025 > Perfect > 0.0]
+#         mds1.append(mds_transformed_subset[:,0])
+#         mds2.append(mds_transformed_subset[:,1])
+#         real_i = np.column_stack((mds1[i],mds2[i],[0]*len(mds1[i]))) # stack projections for all realizations
+#         all_real.append(real_i)
+#
+#     # Make the LD space invariant to  translation, rotation, reflection/flipping, This applies the proposed method to
+#     # all realization and the base case individually to yield a unique solution.
+#     for i in range(1,len(all_real)):
+#         # Recover the rotation and translation matrices, R,T respectively for each realization
+#         ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+#         t.append(ret_T)
+#         r.append(ret_R)
+#
+#         # Compare the recovered R and T with the base case by creating a new coordinate scheme via prior
+#         # solutions of r, and t
+#         new_coord = (ret_R@np.transpose(all_real[i])) + ret_T
+#         calc_real.append(new_coord)
+#
+#         # Find the rmse as an error check between corrected realization and base case
+#         rmse_err = rmse(new_coord, all_real[0])
+#         all_rmse.append(rmse_err)
+#     return random_seeds, all_real, calc_real, all_rmse, norm_stress
 
+
+def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric):
     """
-    :param df: TODO
-    :param ns_features: TODO
-    :param num_realizations: maximum number of random samples
-    :param base_seed: TODO
-    :param start_seed: TODO
-    :param stop_seed: TODO
-    :return: TODO
+
+    :param df:
+    :param ns_features:
+    :param num_realizations:
+    :param base_seed:
+    :param start_seed:
+    :param stop_seed:
+    :param dissimilarity_metric:
+    :return:
     """
 
     # Arrays below store random values for every parameter changing using the utility functions defined later in the
     # code for each realization
-    random_seeds = generate_random_seeds(base_seed, num_realizations, start_seed, stop_seed)
+    random_seeds=generate_random_seeds(base_seed, num_realizations, start_seed, stop_seed)
 
-    mds1 = [] # MDS projection 1
-    mds2 = [] # MDS projection 2
-    norm_stress = []
-    all_real = [] # All realizations prepared for rigid transform
-    t = []
-    r = []
-    all_rmse = []
-    calc_real = [] # analytical estimation of each realization from R,T recovered
+    mds1=[] # MDS projection 1
+    mds2=[] # MDS projection 2
+    norm_stress=[]
+    all_real=[] # All realizations prepared for rigid transform
+    t=[]
+    r=[]
+    all_rmse=[]
+    calc_real=[]  # analytical estimation of each realization from R,T recovered
+
+    # # Based on user-input, 1, 2, 3, compute the dissimilarity matrix required for MDS computation
+    # dij_type as fn input
+    # dissimilarity_metrics = ['euclidean', 'cityblock', 'mahalanobis']
+    # dij_metric=dissimilarity_metrics[dij_type-1]
+    # dij=pdist1(df[ns_features].values, dij_metric)
+    # dij_matrix=distance.squareform(dij)
+
+    # Based on user-input compute the dissimilarity matrix required for MDS computation
+    dissimilarity_metrics = ['euclidean', 'cityblock', 'mahalanobis', 'seuclidean', 'minkowski', 'chebyshev',
+                             'cosine', 'correlation', 'spearman', 'hamming', 'jaccard']
+    dij_metric = dissimilarity_metric.lower()
+
+    if dij_metric in dissimilarity_metrics:
+        dij = pdist1(df[ns_features].values, dij_metric)
+        dij_matrix = distance.squareform(dij)
+
+    else:
+        print("Use a dissimilarity metric present in pdist1 from pydist2 package")
 
     for i in range(0, num_realizations):
-        embedding_subset = MDS(n_components=2,n_init = 20,max_iter = 1000,random_state = random_seeds[i])
-        mds_transformed_subset = embedding_subset.fit_transform(df[ns_features])
+        embedding_subset = MDS(dissimilarity='precomputed', n_components=2, n_init=20, max_iter=1000,
+                               random_state=random_seeds[i])
+        mds_transformed_subset = embedding_subset.fit_transform(dij_matrix)
         raw_stress = embedding_subset.stress_
         dissimilarity_matrix = embedding_subset.dissimilarity_matrix_
         stress_1 = np.sqrt(raw_stress / (0.5 * np.sum(dissimilarity_matrix**2)))
@@ -175,7 +254,6 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
         rmse_err = rmse(new_coord, all_real[0])
         all_rmse.append(rmse_err)
     return random_seeds, all_real, calc_real, all_rmse, norm_stress
-
 
 def rmse(array1, array2):
     """
