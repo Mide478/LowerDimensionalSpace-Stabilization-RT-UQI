@@ -8,6 +8,9 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.metrics.pairwise import euclidean_distances
 from shapely.geometry import Polygon, Point
 from scipy.spatial import ConvexHull
+from scipy.stats import norm
+import matplotlib.patches as mpatches
+
 
 def Normalizer(df_original, feats):
     """
@@ -670,4 +673,48 @@ def convex_hull(array, title, x_off, y_off, Ax, Ay):
         plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
         plt.show()
         return my_points, hull, vertices
+
+
+def marginal_dbn(dataframe, features):
+    """
+
+    :param dataframe:
+    :param features:
+    :return:
+    """
+    df_std = standardizer(dataframe, features=features, keep_only_std_features=True)
+    ns_features = df_std.columns.tolist()
+
+    N = 10
+    fig, axs = plt.subplots(1, 3, figsize=(18, 4))
+    for feat in range(len(ns_features)):
+        x = df_std[ns_features[feat]]
+        stdev = np.std(x)
+        mean = np.mean(x)
+        ax = sns.kdeplot(x, fill=True, ax=axs[feat])
+
+        for i in range(1,4):  # st. dev away from mean needed for visuals.
+            x1 = np.linspace(mean - i * stdev, mean - (i - 1) * stdev, N)
+            x2 = np.linspace(mean - (i - 1) * stdev, mean + (i - 1) * stdev, N)
+            x3 = np.linspace(mean + (i - 1) * stdev, mean + i * stdev, N)
+            x = np.concatenate((x1, x2, x3))
+            x = np.where((mean - (i - 1) * stdev < x) & (x < mean + (i - 1) * stdev), np.nan, x)
+            y = norm.pdf(x, mean, stdev)
+            ax.fill_between(x, y, alpha=0.5)
+
+        # Aesthetics
+        axs[feat].set_xlabel('Normal scores for ' + ns_features[feat][3:])
+        axs[feat].set_xticks(ticks=np.arange(-5, 5))
+        axs[feat].set_ylabel("Marginal probability density")
+
+    # Create legend with patch, color match using CSS colors in matplotlib
+    std_1 = mpatches.Patch(color='sandybrown', label='+/- 1'r'$\sigma$')
+    std_2 = mpatches.Patch(color='darkseagreen', label='+/- 2'r'$\sigma$')
+    std_3 = mpatches.Patch(color='indianred', label='+/- 3'r'$\sigma$')
+    plt.legend(handles=[std_1, std_2, std_3])
+    plt.subplots_adjust(wspace=0.3)
+    plt.savefig('Marginal distributions and st. deviation thresholds for all predictors.tiff', dpi=300,
+                bbox_inches='tight')
+    plt.show()
+    return
 
