@@ -796,3 +796,45 @@ def marginal_dbn(dataframe, features):
     plt.show()
     return
 
+
+def anchor_visuals(anchors_1, anchors_2, new_coord_anchor, Ax, Ay, x_off, y_off):
+    # Visualization of base case and stabilized solution
+    fig , [ax0, ax1, ax2] = plt.subplots(1,3)
+
+    # For base case anchors i.e. in N case
+    ax0.scatter(anchors_1[:,0], anchors_1[:,1], marker='o', s=50, color='blue', edgecolors="black")
+    for index, label in enumerate(range(1,len(anchors_1)+1)):
+        ax0.annotate(label, (anchors_1[:,0][index]+x_off, anchors_1[:,1][index]+y_off), size=10, style='italic')
+    ax0.set_aspect('auto')
+    ax0.set_title('Anchors from N sample case', size=16)
+    ax0.set_xlabel(Ax, size=14)
+    ax0.set_ylabel(Ay, size=14)
+    ax0.tick_params(axis='both', which='major', labelsize=12)
+
+    # For the realization anchors at N+1 case
+    ax1.scatter(anchors_2[:,0], anchors_2[:,1], marker='o', s=50, color='blue', edgecolors="black")
+    for index, label in enumerate(range(1,len(anchors_2)+1)):
+        ax1.annotate(label, (anchors_2[:,0][index]+x_off, anchors_2[:,1][index]+y_off), size=10, style='italic')
+    ax1.set_aspect('auto')
+    ax1.set_title('Anchors from N+1 sample case', size=16)
+    ax1.set_xlabel(Ax, size=14)
+    ax1.set_ylabel(Ay, size=14)
+    ax1.tick_params(axis='both', which='major', labelsize=12)
+
+    # Visualize the normalized stabilized anchor points
+    ax2.scatter(new_coord_anchor[:,0], new_coord_anchor[:,1], marker='o', s=50, color='blue', edgecolors="black")
+    for index, label in enumerate(range(1,len(new_coord_anchor[:,0])+1)):
+        ax2.annotate(label, (new_coord_anchor[:,0][index]+x_off, new_coord_anchor[:,1][index]+y_off), size=10,
+                     style='italic')
+    ax2.set_aspect('auto')
+    ax2.set_title('Stabilized anchor solution', size=16)
+    ax2.set_xlabel(Ax, size=14)
+    ax2.set_ylabel(Ay, size=14)
+    ax2.tick_params(axis='both', which='major', labelsize=12)
+
+    plt.subplots_adjust(left=0.0, bottom=0.0, right=3., top=1.3, wspace=0.25, hspace=0.3)
+    plt.savefig( 'Anchor sets & Stabilized Anchor set Solution.tiff', dpi=300, bbox_inches='tight')
+    plt.show()
+    return
+
+
