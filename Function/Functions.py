@@ -646,17 +646,17 @@ def convex_hull(array, title, x_off, y_off, Ax, Ay):
     polygon = Polygon(vertices)
 
     # check if data is a strict convex polygon
-    binary_bool = fn.is_convex_polygon(polygon)
+    binary_bool = is_convex_polygon(polygon)
     if binary_bool is False:
         return "Convex polygon assumption not met, do not use this workflow"
 
     else:
         # Make sample point visuals
-        plt.scatter(my_points[:,0], my_points[:,1],marker='o', s=50, color='blue', edgecolors="black")
+        plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='blue', edgecolors="black")
 
         # Annotate sample index
-        for index, label in enumerate(range(1,len(my_points[:,0])+1)):
-            plt.annotate(label, (my_points[:,0][index]+x_off, my_points[:,1][index]+y_off), size=8, style='italic')
+        for index, label in enumerate(range(1, len(my_points[:, 0])+1)):
+            plt.annotate(label, (my_points[:, 0][index]+x_off, my_points[:, 1][index]+y_off), size=8, style='italic')
 
         # Make figure to visualize convex hull polygon and highlight polygon formed
         for simplex in hull.simplices:
@@ -669,5 +669,5 @@ def convex_hull(array, title, x_off, y_off, Ax, Ay):
         plt.ylabel(Ay)
         plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
         plt.show()
-        return my_points, hull, vertices, polygon
+        return my_points, hull, vertices
 
