@@ -797,7 +797,47 @@ def marginal_dbn(dataframe, features):
     return
 
 
-def anchor_visuals(anchors_1, anchors_2, new_coord_anchor, Ax, Ay, x_off, y_off):
+def stabilize_anchors(array1, array2, hull_1, hull_2):
+
+    # Obtain the anchor points for n and n+1 scenarios
+    vertices_index = hull_1.vertices
+    vertices2_index = hull_2.vertices
+
+    # Make sure the indexes of the anchor points from the data and check if the anchor points from scenario n
+    # is in scenario n+1 array as well
+    data_index_present = vertices_index[np.isin(vertices_index, vertices2_index)] # set as an assertion?
+
+    # Get anchors for n-case scenario
+    case1_anchors = array1[vertices_index]
+    anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1], [0]*len(case1_anchors)))
+
+    # Get anchors for n+1 case scenario
+    case2_anchors = array2[vertices2_index]
+    anchors2 = np.column_stack((case2_anchors[:, 0], case2_anchors[:, 1], [0]*len(case2_anchors)))
+
+    # Recover the rotation and translation matrices R,t, respectively for the stable anchor points in n+1 to
+    # match anchors in the n-case scenario
+    R_anchors, t_anchors = rigid_transform_3D(np.transpose(anchors2), np.transpose(anchors1))
+
+    # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions of R, t
+    new_coord_anchors = (R_anchors@np.transpose(anchors2)) + t_anchors
+
+    # Find the rmse as an error check between estimated anchor points in n+1 scenario and anchor points in n scenario
+    rmse_err_anchors = rmse(new_coord_anchors, anchors1)
+
+    # Create a convex hull polygon of the normalized stabilized anchor points. Set this as an assertion!
+    stable_coords_anchors = np.transpose(new_coord_anchors[:2, :])
+
+    # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario to
+    # obtain the now stabilized solution for every sample point.
+    stable_anchors_array = np.column_stack((array2[:, 0], array2[:, 1], [0] * len(array2)))
+    new_coords_alldata = (R_anchors @ np.transpose(stable_anchors_array)) + t_anchors
+    stable_coords_alldata = np.transpose(new_coords_alldata[:2, :])
+    return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata
+
+
+def stable_anchor_visuals(anchors_1, anchors_2, stable_coords_anchors, Ax, Ay, x_off, y_off):
+
     # Visualization of base case and stabilized solution
     fig , [ax0, ax1, ax2] = plt.subplots(1,3)
 
@@ -806,34 +846,55 @@ def anchor_visuals(anchors_1, anchors_2, new_coord_anchor, Ax, Ay, x_off, y_off)
     for index, label in enumerate(range(1,len(anchors_1)+1)):
         ax0.annotate(label, (anchors_1[:,0][index]+x_off, anchors_1[:,1][index]+y_off), size=10, style='italic')
     ax0.set_aspect('auto')
-    ax0.set_title('Anchors from N sample case', size=16)
+    ax0.set_title('Anchors from N sample case', size=14)
     ax0.set_xlabel(Ax, size=14)
     ax0.set_ylabel(Ay, size=14)
     ax0.tick_params(axis='both', which='major', labelsize=12)
 
     # For the realization anchors at N+1 case
-    ax1.scatter(anchors_2[:,0], anchors_2[:,1], marker='o', s=50, color='blue', edgecolors="black")
-    for index, label in enumerate(range(1,len(anchors_2)+1)):
-        ax1.annotate(label, (anchors_2[:,0][index]+x_off, anchors_2[:,1][index]+y_off), size=10, style='italic')
+    ax1.scatter(anchors_2[:, 0], anchors_2[:, 1], marker='o', s=50, color='blue', edgecolors="black")
+    for index, label in enumerate(range(1, len(anchors_2)+1)):
+        ax1.annotate(label, (anchors_2[:, 0][index]+x_off, anchors_2[:, 1][index]+y_off), size=10, style='italic')
     ax1.set_aspect('auto')
-    ax1.set_title('Anchors from N+1 sample case', size=16)
+    ax1.set_title('Anchors from N+1 sample case', size=14)
     ax1.set_xlabel(Ax, size=14)
     ax1.set_ylabel(Ay, size=14)
     ax1.tick_params(axis='both', which='major', labelsize=12)
 
     # Visualize the normalized stabilized anchor points
-    ax2.scatter(new_coord_anchor[:,0], new_coord_anchor[:,1], marker='o', s=50, color='blue', edgecolors="black")
-    for index, label in enumerate(range(1,len(new_coord_anchor[:,0])+1)):
-        ax2.annotate(label, (new_coord_anchor[:,0][index]+x_off, new_coord_anchor[:,1][index]+y_off), size=10,
-                     style='italic')
+    ax2.scatter(stable_coords_anchors[:, 0], stable_coords_anchors[:, 1], marker='o', s=50, color='blue',
+                edgecolors="black")
+    for index, label in enumerate(range(1, len(stable_coords_anchors[:, 0])+1)):
+        ax2.annotate(label, (stable_coords_anchors[:, 0][index]+x_off, stable_coords_anchors[:, 1][index]+y_off),
+                     size=10, style='italic')
     ax2.set_aspect('auto')
-    ax2.set_title('Stabilized anchor solution', size=16)
+    ax2.set_title('Stabilized anchor solution', size=14)
     ax2.set_xlabel(Ax, size=14)
     ax2.set_ylabel(Ay, size=14)
     ax2.tick_params(axis='both', which='major', labelsize=12)
 
     plt.subplots_adjust(left=0.0, bottom=0.0, right=3., top=1.3, wspace=0.25, hspace=0.3)
     plt.savefig( 'Anchor sets & Stabilized Anchor set Solution.tiff', dpi=300, bbox_inches='tight')
+    plt.show()
+    return
+
+
+def stable_representation(stable_coords_alldata, title, Ax, Ay, x_off, y_off, sample_added):
+    # Visualize the n+1 case for all samples with stabilized representation as obtained in the n-case implying
+    # rotation, translation, and reflection invariance.
+    plt.scatter(stable_coords_alldata[:sample_added-1,0], stable_coords_alldata[:sample_added-1,1], marker='o', s=50,
+                color='blue', edgecolors="black")
+    plt.scatter(stable_coords_alldata[sample_added-1,0], stable_coords_alldata[sample_added-1,1], marker='*', color='k',
+                s=90)
+
+    for index, label in enumerate(range(1,len(stable_coords_alldata[:,0])+1)):
+        plt.annotate(label, (stable_coords_alldata[:,0][index]+x_off, stable_coords_alldata[:,1][index]+y_off), size=8,
+                     style='italic')
+
+    plt.title(title)
+    plt.xlabel(Ax)
+    plt.ylabel(Ay)
+    plt.savefig( 'Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
     plt.show()
     return
 
