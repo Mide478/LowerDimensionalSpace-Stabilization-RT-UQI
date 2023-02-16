@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.manifold import MDS          # multidimensional scaling
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances
 from shapely.geometry import Polygon, Point
 from scipy.spatial import ConvexHull
 from scipy.stats import norm
@@ -658,21 +658,25 @@ def bivariate_plotter(array, palette_, response, title, plot_type, dataframe, Ax
         plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
     return
 
-def visual_model_check(dataframe, features, fig_name, expectation_array):
-    """
+def visual_model_check(dataframe, features, fig_name, array, expectation_compute=True):
 
+    """
     :param dataframe:
     :param features:
     :param fig_name:
-    :param expectation_array:
+    :param array:
+    :param expectation_compute:
     :return:
     """
 
     # Obtain dataframe with the standardized predictor features
     df = dataframe[features]
 
-    # Grab the expectation of the stabilized solution
-    stabilized_expected_proj = np.transpose(expectation_array[:2, :])
+    if expectation_compute is True:
+        # Grab the expectation of the stabilized solution
+        stabilized_expected_proj = np.transpose(array[:2, :])
+    else:
+        stabilized_expected_proj = array.copy()
 
     # insert distortion visual
     dists = euclidean_distances(df, squared=False).ravel()
@@ -715,10 +719,16 @@ def visual_model_check(dataframe, features, fig_name, expectation_array):
     plt.show()
     return
 
-def convex_hull(array, title, x_off, y_off, Ax, Ay):
+def convex_hull(array, title, x_off, y_off, Ax, Ay, expectation_compute=True):
 
     # Using samples from either n-case or n+1 case scenario to make a convex hull i.e., convex polygon
-    my_points = array[0][:,:2] # all samples in projected space
+
+    if expectation_compute is True:
+        my_points = np.transpose(array[:2, :])
+    else:
+        my_points = array[0][:, :2] # all samples in projected space
+
+
     hull = ConvexHull(my_points)
 
     # Check for point in polygon
