@@ -658,11 +658,11 @@ def bivariate_plotter(array, palette_, response, title, plot_type, dataframe, Ax
         plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
     return
 
-def visual_model_check(dataframe, features, fig_name, array, expectation_compute=True):
-
+def visual_model_check(dataframe, features, norm_type, fig_name, array, expectation_compute=True):
     """
     :param dataframe:
     :param features:
+    :param norm_type:
     :param fig_name:
     :param array:
     :param expectation_compute:
@@ -679,10 +679,19 @@ def visual_model_check(dataframe, features, fig_name, array, expectation_compute
         stabilized_expected_proj = array.copy()
 
     # insert distortion visual
-    dists = euclidean_distances(df, squared=False).ravel()
-    nonzero = dists != 0   # select only non-identical samples pairs
-    dists = dists[nonzero]
-    projected_dists = euclidean_distances(stabilized_expected_proj, squared=False).ravel()[nonzero]
+    norm_type = norm_type.upper()
+
+    if norm_type == 'L2':
+        dists = manhattan_distances(df).ravel()
+        nonzero = dists != 0  # select only non-identical samples pairs
+        dists = dists[nonzero]
+        projected_dists = manhattan_distances(stabilized_expected_proj).ravel()[nonzero]
+
+    elif norm_type == 'OTHER':
+        dists = euclidean_distances(df, squared=False).ravel()
+        nonzero = dists != 0  # select only non-identical samples pairs
+        dists = dists[nonzero]
+        projected_dists = euclidean_distances(stabilized_expected_proj, squared=False).ravel()[nonzero]
 
     plt.subplot(221)
     plt.scatter(dists,projected_dists,c='red',alpha=0.2,edgecolor = 'black')
