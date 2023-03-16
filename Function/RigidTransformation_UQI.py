@@ -311,8 +311,8 @@ class RigidTransformation:
         stop_seed
         dissimilarity_metric
         """
-        self.df = standardizer(df, features, keep_only_std_features=True)
         self.df_idx = self.df.copy()
+        self.df = standardizer(df, features, keep_only_std_features=True)
         self.df_idx[idx] = np.arange(1, len(df) + 1).astype(int)
         self.idx = idx
         self.num_realizations = num_realizations
