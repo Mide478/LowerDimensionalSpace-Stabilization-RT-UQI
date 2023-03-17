@@ -814,7 +814,7 @@ class RigidTransformation:
             return my_points, hull, vertices
 
 
-    def marginal_dbn(self):
+    def marginal_dbn(self, save=True):
         """
 
         Returns:TODO
@@ -851,7 +851,8 @@ class RigidTransformation:
         std_3 = mpatches.Patch(color='indianred', label='+/- 3'r'$\sigma$')
         plt.legend(handles=[std_1, std_2, std_3])
         plt.subplots_adjust(wspace=0.3)
-        plt.savefig('Marginal distributions and st. deviation thresholds for all predictors.tiff', dpi=300,
+        if save:
+            plt.savefig('Marginal distributions and st. deviation thresholds for all predictors.tiff', dpi=300,
                     bbox_inches='tight')
         plt.show()
 
@@ -861,6 +862,7 @@ class RigidTransf_NPlus(RigidTransformation):
         super().__init__(df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric)
 
 
+    @staticmethod
     def stabilize_anchors(self, array1, array2, hull_1, hull_2):
         # Obtain the anchor points for n and n+1 scenarios
         vertices_index = hull_1.vertices
@@ -898,40 +900,27 @@ class RigidTransf_NPlus(RigidTransformation):
         stable_anchors_array = np.column_stack((array2[:, 0], array2[:, 1], [0] * len(array2)))
         new_coords_alldata = (R_anchors @ np.transpose(stable_anchors_array)) + t_anchors
         stable_coords_alldata = np.transpose(new_coords_alldata[:2, :])
+
+        # Assign results to class variables
+        self.anchors1 = anchors1
+        self.anchors2 = anchors2
+        self.R_anchors = R_anchors
+        self.t_anchors = t_anchors
+        self.rmse_err_anchors = rmse_err_anchors
+        self.stable_coords_anchors = stable_coords_anchors
+        self.stable_coords_alldata = stable_coords_alldata
         return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata
 
 
-    def stable_representation(self, stable_coords_alldata, title, Ax, Ay, x_off, y_off, sample_added):
-        # Visualize the n+1 case for all samples with stabilized representation as obtained in the n-case implying
-        # rotation, translation, and reflection invariance.
-        plt.scatter(stable_coords_alldata[:sample_added - 1, 0], stable_coords_alldata[:sample_added - 1, 1], marker='o',
-                    s=50,
-                    color='blue', edgecolors="black")
-        plt.scatter(stable_coords_alldata[sample_added - 1, 0], stable_coords_alldata[sample_added - 1, 1], marker='*',
-                    color='k',
-                    s=90)
-
-        for index, label in enumerate(range(1, len(stable_coords_alldata[:, 0]) + 1)):
-            plt.annotate(label, (stable_coords_alldata[:, 0][index] + x_off, stable_coords_alldata[:, 1][index] + y_off),
-                         size=8,
-                         style='italic')
-
-        plt.title(title)
-        plt.xlabel(Ax)
-        plt.ylabel(Ay)
-        plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
-        plt.show()
-        return
-
-
-    def stable_anchor_visuals(self, anchors_1, anchors_2, stable_coords_anchors, Ax, Ay, x_off, y_off):
+    def stable_anchor_visuals(self, Ax, Ay, x_off, y_off, save=True):
         # Visualization of base case and stabilized solution
         fig, [ax0, ax1, ax2] = plt.subplots(1, 3)
 
         # For base case anchors i.e. in N case
-        ax0.scatter(anchors_1[:, 0], anchors_1[:, 1], marker='o', s=50, color='blue', edgecolors="black")
-        for index, label in enumerate(range(1, len(anchors_1) + 1)):
-            ax0.annotate(label, (anchors_1[:, 0][index] + x_off, anchors_1[:, 1][index] + y_off), size=10, style='italic')
+        ax0.scatter(self.anchors1[:, 0], self.anchors1[:, 1], marker='o', s=50, color='blue', edgecolors="black")
+        for index, label in enumerate(range(1, len(self.anchors1) + 1)):
+            ax0.annotate(label, (self.anchors1[:, 0][index] + x_off, self.anchors1[:, 1][index] + y_off),
+                         size=10, style='italic')
         ax0.set_aspect('auto')
         ax0.set_title('Anchors from N sample case', size=14)
         ax0.set_xlabel(Ax, size=14)
@@ -939,9 +928,10 @@ class RigidTransf_NPlus(RigidTransformation):
         ax0.tick_params(axis='both', which='major', labelsize=12)
 
         # For the realization anchors at N+1 case
-        ax1.scatter(anchors_2[:, 0], anchors_2[:, 1], marker='o', s=50, color='blue', edgecolors="black")
-        for index, label in enumerate(range(1, len(anchors_2) + 1)):
-            ax1.annotate(label, (anchors_2[:, 0][index] + x_off, anchors_2[:, 1][index] + y_off), size=10, style='italic')
+        ax1.scatter(self.anchors2[:, 0], self.anchors2[:, 1], marker='o', s=50, color='blue', edgecolors="black")
+        for index, label in enumerate(range(1, len(self.anchors2) + 1)):
+            ax1.annotate(label, (self.anchors2[:, 0][index] + x_off, self.anchors2[:, 1][index] + y_off),
+                         size=10, style='italic')
         ax1.set_aspect('auto')
         ax1.set_title('Anchors from N+1 sample case', size=14)
         ax1.set_xlabel(Ax, size=14)
@@ -949,11 +939,11 @@ class RigidTransf_NPlus(RigidTransformation):
         ax1.tick_params(axis='both', which='major', labelsize=12)
 
         # Visualize the normalized stabilized anchor points
-        ax2.scatter(stable_coords_anchors[:, 0], stable_coords_anchors[:, 1], marker='o', s=50, color='blue',
+        ax2.scatter(self.stable_coords_anchors[:, 0], self.stable_coords_anchors[:, 1], marker='o', s=50, color='blue',
                     edgecolors="black")
-        for index, label in enumerate(range(1, len(stable_coords_anchors[:, 0]) + 1)):
-            ax2.annotate(label, (stable_coords_anchors[:, 0][index] + x_off, stable_coords_anchors[:, 1][index] + y_off),
-                         size=10, style='italic')
+        for index, label in enumerate(range(1, len(self.stable_coords_anchors[:, 0]) + 1)):
+            ax2.annotate(label, (self.stable_coords_anchors[:, 0][index] + x_off,
+                                 self.stable_coords_anchors[:, 1][index] + y_off), size=10, style='italic')
         ax2.set_aspect('auto')
         ax2.set_title('Stabilized anchor solution', size=14)
         ax2.set_xlabel(Ax, size=14)
@@ -961,7 +951,28 @@ class RigidTransf_NPlus(RigidTransformation):
         ax2.tick_params(axis='both', which='major', labelsize=12)
 
         plt.subplots_adjust(left=0.0, bottom=0.0, right=3., top=1.3, wspace=0.25, hspace=0.3)
-        plt.savefig('Anchor sets & Stabilized Anchor set Solution.tiff', dpi=300, bbox_inches='tight')
+        if save:
+            plt.savefig('Anchor sets & Stabilized Anchor set Solution.tiff', dpi=300, bbox_inches='tight')
         plt.show()
         return
 
+
+    def stable_representation(self, title, Ax, Ay, x_off, y_off, sample_added, save=True):
+        # Visualize the n+1 case for all samples with stabilized representation as obtained in the n-case implying
+        # rotation, translation, and reflection invariance.
+        plt.scatter(self.stable_coords_alldata[:sample_added - 1, 0], self.stable_coords_alldata[:sample_added - 1, 1],
+                    marker='o', s=50, color='blue', edgecolors="black")
+        plt.scatter(self.stable_coords_alldata[sample_added - 1, 0], self.stable_coords_alldata[sample_added - 1, 1],
+                    marker='*', color='k', s=90)
+
+        for index, label in enumerate(range(1, len(self.stable_coords_alldata[:, 0]) + 1)):
+            plt.annotate(label, (self.stable_coords_alldata[:, 0][index] + x_off,
+                                 self.stable_coords_alldata[:, 1][index] + y_off), size=8, style='italic')
+
+        plt.title(title)
+        plt.xlabel(Ax)
+        plt.ylabel(Ay)
+        if save:
+            plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
+        plt.show()
+        return
