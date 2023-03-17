@@ -221,6 +221,7 @@ def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop
         dij = pdist1(df[ns_features].values, dij_metric)
         dij_matrix = distance.squareform(dij)
 
+
     else:
         print("Use a dissimilarity metric present in pdist1 from pydist2 package")
 
@@ -329,6 +330,9 @@ def real_plotter(df, idx, response, array1, r_idx, random_seeds, Ax, Ay, title, 
         pairplot.set_xlabel(Ax)
         pairplot.set_ylabel(Ay)
         pairplot.set_title(title[0] + str(r_idx[0]) + " at seed " + str(random_seeds[0]))
+        for m, txt in enumerate(self.df_idx[self.idx]):
+            pairplot.annotate(txt, (self.all_real[0][:, 0][m] + x_off, self.all_real[0][:, 1][m] + y_off),
+                              size=10, style='italic')
 
     # Figure info
     ax.set_aspect('auto')

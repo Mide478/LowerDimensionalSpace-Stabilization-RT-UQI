@@ -1,5 +1,7 @@
 import math
 import random
+import pandas as pd
+import numpy as np
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -16,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_adj, wspace, hspace, title, palette_,
-                   hue_=None):
+                   hue_=None, save=True):
     """
     This function plots the matrix scatter plot for the given data.
 
@@ -76,9 +78,20 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
                  plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
                  palette=palette_)
     plt.subplots_adjust(left=left_adj, bottom=bottom_adj, right=right_adj, top=top_adj, wspace=wspace, hspace=hspace)
-    plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+    if save:
+        plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
     plt.show()
     return
+
+
+def make_levels(data, cat_response, num_response):
+
+    bins = [0,2500,5000,7500,10000]                              # assign the production bins (these are the fence posts)
+    labels = ['low', 'med', 'high', 'vhigh']                     # assign the labels
+    category = pd.cut(data[num_response],bins,labels=labels)     # make the 1D array with the labels for our data
+    data[cat_response] = category                                # add the new ordinal production feature to our DataFrames
+
+    return data
 
 
 def standardizer(dataset, features, keep_only_std_features=False):
@@ -329,7 +342,7 @@ class RigidTransformation:
         self.array_exp = None
 
 
-    def run_rigid_MDS(self, num_realizations):
+    def run_rigid_MDS(self):
         """
 
         Parameters:  TODO
@@ -363,7 +376,7 @@ class RigidTransformation:
         else:
             print("Use a dissimilarity metric present in pdist1 from pydist2 package")
 
-        for i in range(0, num_realizations):
+        for i in range(0, self.num_realizations):
             embedding_subset = MDS(dissimilarity='precomputed', n_components=2, n_init=20, max_iter=1000,
                                    random_state=random_seeds[i])
             mds_transformed_subset = embedding_subset.fit_transform(dij_matrix)
@@ -403,8 +416,7 @@ class RigidTransformation:
 
         return random_seeds, all_real, calc_real, all_rmse, norm_stress
 
-
-    def real_plotter(self, response, r_idx, random_seeds, Ax, Ay, title, x_off, y_off, cmap, array2=None,
+    def real_plotter(self, response, r_idx, Ax, Ay, title, x_off, y_off, cmap, array2=None,
                      save=True):
         """
 
@@ -449,7 +461,7 @@ class RigidTransformation:
                                            palette=cmap, edgecolor="black", ax=ax)
                 pairplot.set_xlabel(Ax)
                 pairplot.set_ylabel(Ay)
-                pairplot.set_title(title[i] + str(r_idx[i]) + " at seed " + str(random_seeds[i]))
+                pairplot.set_title(title[i] + str(r_idx[i]) + " at seed " + str(self.random_seeds[i]))
                 for j, txt in enumerate(self.df_idx[self.idx]):
                     pairplot.annotate(txt, (self.all_real[i][:, 0][j] + x_off, self.all_real[i][:, 1][j] + y_off),
                                       size=10, style='italic')
@@ -462,7 +474,7 @@ class RigidTransformation:
                 pairplot.set_xlabel(Ax)
                 pairplot.set_ylabel(Ay)
                 pairplot.set_title("Stabilized solution for " + title[k].lower() + str(r_idx[k]) + " at seed " +
-                                   str(random_seeds[k - 1]))
+                                   str(self.random_seeds[k - 1]))
                 for l, txt in enumerate(self.df_idx[self.idx]):
                     pairplot.annotate(txt, (self.calc_real[k][0][l] + x_off, self.calc_real[k][1][l] + y_off), size=10,
                                       style='italic')
@@ -473,7 +485,10 @@ class RigidTransformation:
                                        s=60, markers='o', palette=cmap, edgecolor="black", ax=ax)
             pairplot.set_xlabel(Ax)
             pairplot.set_ylabel(Ay)
-            pairplot.set_title(title[0] + str(r_idx[0]) + " at seed " + str(random_seeds[0]))
+            pairplot.set_title(title[0] + str(r_idx[0]) + " at seed " + str(self.random_seeds[0]))
+            for m, txt in enumerate(self.df_idx[self.idx]):
+                pairplot.annotate(txt, (self.all_real[0][:, 0][m] + x_off, self.all_real[0][:, 1][m] + y_off),
+                                  size=10, style='italic')
 
         # Figure info
         ax.set_aspect('auto')
@@ -486,8 +501,7 @@ class RigidTransformation:
             plt.savefig('Variations with seeds 2x2 for data subset with tracking.tiff', dpi=300, bbox_inches='tight')
         plt.show()
 
-
-    def bivariate_plotter(self, palette_, response, title, plot_type, Ax, Ay, save=False):
+    def bivariate_plotter(self, palette_, response, title, plot_type, Ax, Ay, save=True):
         """
 
         Parameters
@@ -555,7 +569,6 @@ class RigidTransformation:
         else:
             print("Use a plot_type of variation or jitters")
 
-
     def expectation(self, r_idx, Ax, Ay, verbose=False):
         """
         expectation of all the calc_real
@@ -592,9 +605,9 @@ class RigidTransformation:
                   "with a " + Ax +
                   " variance of", round(sigma_x, 4), " and " + Ay + " variance of", round(sigma_y, 4))
 
+        # Update
         self.array_exp = E
         return E
-
 
     def expect_plotter(self, r_idx, Lx, Ly, xmin, xmax, ymin, ymax, save=True):
         """
@@ -640,7 +653,6 @@ class RigidTransformation:
         plt.show()
         return
 
-
     def compare_plot(self, response, r_idx, Ax, Ay, x_off, y_off, cmap, save=True):
         """
 
@@ -665,7 +677,8 @@ class RigidTransformation:
         if self.array_exp is None:
             raise TypeError("Run expectation first.")
         plt.subplot(121)
-        pairplot = sns.scatterplot(x=self.all_real[r_idx][:, 0], y=self.all_real[r_idx][:, 1], hue=self.df_idx[response],
+        pairplot = sns.scatterplot(x=self.all_real[r_idx][:, 0], y=self.all_real[r_idx][:, 1],
+                                   hue=self.df_idx[response],
                                    s=60, markers='o', palette=cmap, edgecolor="black")
         for i, txt in enumerate(self.df_idx[self.idx]):
             pairplot.annotate(txt, (self.all_real[r_idx][:, 0][i] + x_off, self.all_real[r_idx][:, 1][i] + y_off),
@@ -691,7 +704,6 @@ class RigidTransformation:
             plt.savefig('Stabilized independent result vs expectation of stabilized results.tiff', dpi=300,
                         bbox_inches='tight')
         plt.show()
-
 
     def visual_model_check(self, norm_type, fig_name, array, expectation_compute=True, save=True):
         """
@@ -767,7 +779,6 @@ class RigidTransformation:
             plt.savefig(fig_name + '.tiff', dpi=300, bbox_inches='tight')
         plt.show()
 
-
     @staticmethod
     def convex_hull(array, title, x_off, y_off, Ax, Ay, expectation_compute=True, save=True):
         # Using samples from either n-case or n+1 case scenario to make a convex hull i.e., convex polygon
@@ -813,7 +824,6 @@ class RigidTransformation:
             plt.show()
             return my_points, hull, vertices
 
-
     def marginal_dbn(self, save=True):
         """
 
@@ -853,16 +863,23 @@ class RigidTransformation:
         plt.subplots_adjust(wspace=0.3)
         if save:
             plt.savefig('Marginal distributions and st. deviation thresholds for all predictors.tiff', dpi=300,
-                    bbox_inches='tight')
+                        bbox_inches='tight')
         plt.show()
 
 
 class RigidTransf_NPlus(RigidTransformation):
     def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric):
         super().__init__(df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric)
+        self.anchors1 = None
+        self.anchors1 = None
+        self.anchors2 = None
+        self.R_anchors = None
+        self.t_anchors = None
+        self.rmse_err_anchors = None
+        self.stable_coords_anchors = None
+        self.stable_coords_alldata = None
 
 
-    @staticmethod
     def stabilize_anchors(self, array1, array2, hull_1, hull_2):
         # Obtain the anchor points for n and n+1 scenarios
         vertices_index = hull_1.vertices
@@ -895,13 +912,13 @@ class RigidTransf_NPlus(RigidTransformation):
         # Create a convex hull polygon of the normalized stabilized anchor points. Set this as an assertion!
         stable_coords_anchors = np.transpose(new_coord_anchors[:2, :])
 
-        # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario to
-        # obtain the now stabilized solution for every sample point.
+        # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario
+        # to obtain the now stabilized solution for every sample point.
         stable_anchors_array = np.column_stack((array2[:, 0], array2[:, 1], [0] * len(array2)))
         new_coords_alldata = (R_anchors @ np.transpose(stable_anchors_array)) + t_anchors
         stable_coords_alldata = np.transpose(new_coords_alldata[:2, :])
 
-        # Assign results to class variables
+        # Update
         self.anchors1 = anchors1
         self.anchors2 = anchors2
         self.R_anchors = R_anchors
@@ -910,7 +927,6 @@ class RigidTransf_NPlus(RigidTransformation):
         self.stable_coords_anchors = stable_coords_anchors
         self.stable_coords_alldata = stable_coords_alldata
         return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata
-
 
     def stable_anchor_visuals(self, Ax, Ay, x_off, y_off, save=True):
         # Visualization of base case and stabilized solution
@@ -956,7 +972,6 @@ class RigidTransf_NPlus(RigidTransformation):
         plt.show()
         return
 
-
     def stable_representation(self, title, Ax, Ay, x_off, y_off, sample_added, save=True):
         # Visualize the n+1 case for all samples with stabilized representation as obtained in the n-case implying
         # rotation, translation, and reflection invariance.
@@ -976,3 +991,186 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
         plt.show()
         return
+
+    # @staticmethod
+    # def stabilize_anchors(array1, array2, hull_1, hull_2):
+    #
+    #     # Obtain the anchor points for n and n+1 scenarios
+    #     vertices_index = hull_1.vertices
+    #     vertices2_index = hull_2.vertices
+    #
+    #     # Make sure the indexes of the anchor points from the data and check if the anchor points from scenario n
+    #     # is in scenario n+1 array as well
+    #     data_index_present = vertices_index[np.isin(vertices_index, vertices2_index)] # set as an assertion?
+    #
+    #     # Get anchors for n-case scenario
+    #     case1_anchors = array1[vertices_index]
+    #     anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1], [0]*len(case1_anchors)))
+    #
+    #     # Get anchors for n+1 case scenario
+    #     case2_anchors = array2[vertices2_index]
+    #     anchors2 = np.column_stack((case2_anchors[:, 0], case2_anchors[:, 1], [0]*len(case2_anchors)))
+    #
+    #     # Recover the rotation and translation matrices R,t, respectively for the stable anchor points in n+1 to
+    #     # match anchors in the n-case scenario
+    #     R_anchors, t_anchors = rigid_transform_3D(np.transpose(anchors2), np.transpose(anchors1))
+    #
+    #     # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions of
+    #     # R, t
+    #     new_coord_anchors = (R_anchors@np.transpose(anchors2)) + t_anchors
+    #
+    #     # Find the rmse as an error check between estimated anchor points in n+1 scenario and anchor points in
+    #     # n scenario
+    #     rmse_err_anchors = rmse(new_coord_anchors, anchors1)
+    #
+    #     # Create a convex hull polygon of the normalized stabilized anchor points. Set this as an assertion!
+    #     stable_coords_anchors = np.transpose(new_coord_anchors[:2, :])
+    #
+    #     # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario to
+    #     # obtain the now stabilized solution for every sample point.
+    #     stable_anchors_array = np.column_stack((array2[:, 0], array2[:, 1], [0] * len(array2)))
+    #     new_coords_alldata = (R_anchors @ np.transpose(stable_anchors_array)) + t_anchors
+    #     stable_coords_alldata = np.transpose(new_coords_alldata[:2, :])
+    #     return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata
+    #
+    # @staticmethod
+    # def stable_anchor_visuals(anchors_1, anchors_2, stable_coords_anchors, Ax, Ay, x_off, y_off):
+    #
+    #     # Visualization of base case and stabilized solution
+    #     fig , [ax0, ax1, ax2] = plt.subplots(1,3)
+    #
+    #     # For base case anchors i.e. in N case
+    #     ax0.scatter(anchors_1[:,0], anchors_1[:,1], marker='o', s=50, color='blue', edgecolors="black")
+    #     for index, label in enumerate(range(1,len(anchors_1)+1)):
+    #         ax0.annotate(label, (anchors_1[:,0][index]+x_off, anchors_1[:,1][index]+y_off), size=10, style='italic')
+    #     ax0.set_aspect('auto')
+    #     ax0.set_title('Anchors from N sample case', size=14)
+    #     ax0.set_xlabel(Ax, size=14)
+    #     ax0.set_ylabel(Ay, size=14)
+    #     ax0.tick_params(axis='both', which='major', labelsize=12)
+    #
+    #     # For the realization anchors at N+1 case
+    #     ax1.scatter(anchors_2[:, 0], anchors_2[:, 1], marker='o', s=50, color='blue', edgecolors="black")
+    #     for index, label in enumerate(range(1, len(anchors_2)+1)):
+    #         ax1.annotate(label, (anchors_2[:, 0][index]+x_off, anchors_2[:, 1][index]+y_off), size=10, style='italic')
+    #     ax1.set_aspect('auto')
+    #     ax1.set_title('Anchors from N+1 sample case', size=14)
+    #     ax1.set_xlabel(Ax, size=14)
+    #     ax1.set_ylabel(Ay, size=14)
+    #     ax1.tick_params(axis='both', which='major', labelsize=12)
+    #
+    #     # Visualize the normalized stabilized anchor points
+    #     ax2.scatter(stable_coords_anchors[:, 0], stable_coords_anchors[:, 1], marker='o', s=50, color='blue',
+    #                 edgecolors="black")
+    #     for index, label in enumerate(range(1, len(stable_coords_anchors[:, 0])+1)):
+    #         ax2.annotate(label, (stable_coords_anchors[:, 0][index]+x_off, stable_coords_anchors[:, 1][index]+y_off),
+    #                      size=10, style='italic')
+    #     ax2.set_aspect('auto')
+    #     ax2.set_title('Stabilized anchor solution', size=14)
+    #     ax2.set_xlabel(Ax, size=14)
+    #     ax2.set_ylabel(Ay, size=14)
+    #     ax2.tick_params(axis='both', which='major', labelsize=12)
+    #
+    #     plt.subplots_adjust(left=0.0, bottom=0.0, right=3., top=1.3, wspace=0.25, hspace=0.3)
+    #     plt.savefig( 'Anchor sets & Stabilized Anchor set Solution.tiff', dpi=300, bbox_inches='tight')
+    #     plt.show()
+    #     return
+    #
+    # @staticmethod
+    # def stable_representation(stable_coords_alldata, title, Ax, Ay, x_off, y_off, sample_added):
+    #     # Visualize the n+1 case for all samples with stabilized representation as obtained in the n-case implying
+    #     # rotation, translation, and reflection invariance.
+    #     plt.scatter(stable_coords_alldata[:sample_added-1,0], stable_coords_alldata[:sample_added-1,1], marker='o', s=50,
+    #                 color='blue', edgecolors="black")
+    #     plt.scatter(stable_coords_alldata[sample_added-1,0], stable_coords_alldata[sample_added-1,1], marker='*', color='k',
+    #                 s=90)
+    #
+    #     for index, label in enumerate(range(1,len(stable_coords_alldata[:,0])+1)):
+    #         plt.annotate(label, (stable_coords_alldata[:,0][index]+x_off, stable_coords_alldata[:,1][index]+y_off), size=8,
+    #                      style='italic')
+    #
+    #     plt.title(title)
+    #     plt.xlabel(Ax)
+    #     plt.ylabel(Ay)
+    #     plt.savefig( 'Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
+    #     plt.show()
+    #     return
+    #
+    # @staticmethod
+    # def run_rigid_MDS(df, ns_features, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric):
+    #     """
+    #
+    #     :param df:
+    #     :param ns_features:
+    #     :param num_realizations:
+    #     :param base_seed:
+    #     :param start_seed:
+    #     :param stop_seed:
+    #     :param dissimilarity_metric:
+    #     :return:
+    #     """
+    #
+    #     # Arrays below store random values for every parameter changing using the utility functions defined later in the
+    #     # code for each realization
+    #     random_seeds = generate_random_seeds(base_seed, num_realizations, start_seed, stop_seed)
+    #
+    #     mds1 = []  # MDS projection 1
+    #     mds2 = []  # MDS projection 2
+    #     norm_stress = []
+    #     all_real = []  # All realizations prepared for rigid transform
+    #     t = []
+    #     r = []
+    #     all_rmse = []
+    #     calc_real = []  # analytical estimation of each realization from R,T recovered
+    #
+    #     # # Based on user-input, 1, 2, 3, compute the dissimilarity matrix required for MDS computation
+    #     # dij_type as fn input
+    #     # dissimilarity_metrics = ['euclidean', 'cityblock', 'mahalanobis']
+    #     # dij_metric=dissimilarity_metrics[dij_type-1]
+    #     # dij=pdist1(df[ns_features].values, dij_metric)
+    #     # dij_matrix=distance.squareform(dij)
+    #
+    #     # Based on user-input compute the dissimilarity matrix required for MDS computation
+    #     dissimilarity_metrics = ['euclidean', 'cityblock', 'mahalanobis', 'seuclidean', 'minkowski', 'chebyshev',
+    #                              'cosine', 'correlation', 'spearman', 'hamming', 'jaccard']
+    #     dij_metric = dissimilarity_metric.lower()
+    #
+    #     if dij_metric in dissimilarity_metrics:
+    #         dij = pdist1(df[ns_features].values, dij_metric)
+    #         dij_matrix = distance.squareform(dij)
+    #
+    #
+    #     else:
+    #         print("Use a dissimilarity metric present in pdist1 from pydist2 package")
+    #
+    #     for i in range(0, num_realizations):
+    #         embedding_subset = MDS(dissimilarity='precomputed', n_components=2, n_init=20, max_iter=1000,
+    #                                random_state=random_seeds[i])
+    #         mds_transformed_subset = embedding_subset.fit_transform(dij_matrix)
+    #         raw_stress = embedding_subset.stress_
+    #         dissimilarity_matrix = embedding_subset.dissimilarity_matrix_
+    #         stress_1 = np.sqrt(raw_stress / (0.5 * np.sum(dissimilarity_matrix ** 2)))
+    #         norm_stress.append(stress_1)  # [Poor > 0.2 > Fair > 0.1 > Good > 0.05 > Excellent > 0.025 > Perfect > 0.0]
+    #         mds1.append(mds_transformed_subset[:, 0])
+    #         mds2.append(mds_transformed_subset[:, 1])
+    #         real_i = np.column_stack((mds1[i], mds2[i], [0] * len(mds1[i])))  # stack projections for all realizations
+    #         all_real.append(real_i)
+    #
+    #     # Make the LD space invariant to  translation, rotation, reflection/flipping, This applies the proposed method to
+    #     # all realization and the base case individually to yield a unique solution.
+    #     for i in range(1, len(all_real)):
+    #         # Recover the rotation and translation matrices, R,T respectively for each realization
+    #         ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+    #         t.append(ret_T)
+    #         r.append(ret_R)
+    #
+    #         # Compare the recovered R and T with the base case by creating a new coordinate scheme via prior
+    #         # solutions of r, and t
+    #         new_coord = (ret_R @ np.transpose(all_real[i])) + ret_T
+    #         calc_real.append(new_coord)
+    #
+    #         # Find the rmse as an error check between corrected realization and base case
+    #         rmse_err = rmse(new_coord, all_real[0])
+    #         all_rmse.append(rmse_err)
+    #     return random_seeds, all_real, calc_real, all_rmse, norm_stress
+    #
