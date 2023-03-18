@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_adj, wspace, hspace, title, palette_,
-                   hue_=None, save=True):
+                   hue_=None, n_case=True, save=True):
     """
     This function plots the matrix scatter plot for the given data.
 
@@ -55,10 +55,10 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
 
         # Palette assignment
         if palette_ == 1:
-            palette_ = sns.color_palette("rocket_r", n_colors=len(dataframe[hue_].unique()))
+            palette_ = sns.color_palette("rocket_r", n_colors=len(dataframe[hue_].unique()) + 1)
 
         elif palette_ == 2:
-            palette_ = sns.color_palette("bright", n_colors=len(dataframe[hue_].unique()))
+            palette_ = sns.color_palette("bright", n_colors=len(dataframe[hue_].unique()) + 1)
         else:
             palette_ = None
 
@@ -74,9 +74,46 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
         else:
             palette_ = None
 
-    sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
-                 plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
-                 palette=palette_)
+    # For N_case visuals
+    if n_case is True:
+        sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
+                     plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
+                     palette=palette_)
+
+    else:
+        # Define marker type for last datapoint i.e., the additional sample in N+1 case
+        last_marker = '*'
+
+        # Create pairplot
+        fig = sns.pairplot(data=dataframe, vars=feat_title, diag_kws={'edgecolor': 'black'},
+                           plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
+                           markers='o', palette=palette_)
+
+        # Plot the last datapoint with a different marker type in all subplots
+        for i in range(len(feat_title)):
+            for j in range(len(feat_title)):
+                if i == j:
+                    continue
+                ax = fig.axes[i, j]
+                if ax is not None:
+                    last_datapoint = dataframe[feat_title].iloc[-1, [j, i]].values
+
+                    if dataframe[hue_][len(dataframe) - 1] == 'low':
+                        ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=palette_[0],
+                                   edgecolors="black", linewidth=0.5)
+
+                    elif dataframe[hue_][len(dataframe) - 1] == 'med':
+                        ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=palette_[1],
+                                   edgecolors="black", linewidth=0.5)
+
+                    elif dataframe[hue_][len(dataframe) - 1] == 'high':
+                        ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=palette_[2],
+                                   edgecolors="black", linewidth=0.5)
+
+                    elif dataframe[hue_][len(dataframe) - 1] == 'vhigh':
+                        ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=palette_[3],
+                                   edgecolors="black", linewidth=0.5)
+
     plt.subplots_adjust(left=left_adj, bottom=bottom_adj, right=right_adj, top=top_adj, wspace=wspace, hspace=hspace)
     if save:
         plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
@@ -137,7 +174,7 @@ def Normalizer(df_original, feats):
 
     Arguments
     ---------
-    df: a dataframe consisting of features to be normalized
+    df_original: a dataframe consisting of features to be normalized
 
     feats: a list consisting of features column names to be normalized
 
@@ -307,6 +344,37 @@ def rmse(array1, array2):
     var1 = np.sum(var1)
     rmse = np.sqrt(var1 / len(array1[0, :]))
     return rmse
+
+
+def make_sample_within_ci(dataframe):
+    """
+    Sample a single row from a dataframe of multiple columns such that it is within a 95% confidence interval (CI).
+    Args:
+        dataframe: pandas DataFrame
+    Returns:
+        A pandas DataFrame with a single row of sampled values from each column, such that each value falls within
+        a 95% confidence interval of the original dataset.
+    """
+
+    # Set random seed for reproducibility
+    np.random.seed(42)
+
+    # Calculate mean, standard deviation, and bounds for each column
+    n = len(dataframe)
+    means = dataframe.mean()
+    stds = dataframe.std()
+    t = 1.96  # 95% confidence interval for a normal distribution
+    lower_bounds, upper_bounds = means - t * (stds / np.sqrt(n)), means + t * (stds / np.sqrt(n))
+
+    # Generate random values within 95% CI for each column
+    samples = np.random.uniform(lower_bounds, upper_bounds)
+
+    # Combine sampled values into single row
+    sampled_row = pd.DataFrame([samples], columns=dataframe.columns)
+
+    # Add to dataframe
+    data = dataframe.copy().append(sampled_row, ignore_index=True)
+    return data
 
 
 class RigidTransformation:
