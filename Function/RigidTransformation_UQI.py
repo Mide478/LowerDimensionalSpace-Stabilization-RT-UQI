@@ -176,15 +176,15 @@ def normalizer(array):
     df = pd.DataFrame(arr)
     feats = df.columns.tolist()
     x = df.loc[:, feats].values
-    scaler = RT.MinMaxScaler(feature_range=(-4, 4))
+    scaler = MinMaxScaler(feature_range=(-4, 4))
     xs = scaler.fit_transform(x)
 
     ns_feats = []
     for i in range(0, len(feats)):
-        df[a.shape[1] + feats[i]] = xs[:, i]
-        ns_feats.append(a.shape[1] + feats[i])
+        df[arr.shape[1] + feats[i]] = xs[:, i]
+        ns_feats.append(arr.shape[1] + feats[i])
 
-    final_array = df.iloc[:,len(feats):].values
+    final_array = df.iloc[:, len(feats):].values
     return final_array
 
 

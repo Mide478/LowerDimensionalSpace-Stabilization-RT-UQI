@@ -26,6 +26,8 @@ be specified using a 4 character string or encoded 4-tuple:
 
 import math
 
+import random
+
 import numpy
 
 
