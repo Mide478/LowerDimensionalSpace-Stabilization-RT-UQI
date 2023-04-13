@@ -8,7 +8,7 @@ output_notebook = 'N=100.ipynb'
 
 # Define the parameters to be passed into the notebook
 parameters = {
-    'N': 100
+    'N': 10
 
 }
 
