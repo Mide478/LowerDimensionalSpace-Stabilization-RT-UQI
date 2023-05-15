@@ -156,8 +156,6 @@ def standardizer(dataset, features, keep_only_std_features=False):
 
     df = dataset.copy()
     x = df.loc[:, features].values
-    mu = np.mean(x, axis=0)
-    sd = np.std(x, axis=0)
     xs = StandardScaler().fit_transform(x)
 
     ns_feats = []
@@ -406,7 +404,7 @@ class RigidTransformation:
         self.array_exp = None
 
 
-    def run_rigid_MDS(self):
+    def run_rigid_MDS(self, normalize_projections=True):
         """
 
         Parameters:  TODO
@@ -444,6 +442,11 @@ class RigidTransformation:
             embedding_subset = MDS(dissimilarity='precomputed', n_components=2, n_init=20, max_iter=1000,
                                    random_state=random_seeds[i])
             mds_transformed_subset = embedding_subset.fit_transform(dij_matrix)
+
+            if normalize_projections:
+                scaler = StandardScaler()
+                mds_transformed_subset = scaler.fit_transform(mds_transformed_subset)
+
             raw_stress = embedding_subset.stress_
             dissimilarity_matrix = embedding_subset.dissimilarity_matrix_
             stress_1 = np.sqrt(raw_stress / (0.5 * np.sum(dissimilarity_matrix ** 2)))
@@ -651,18 +654,17 @@ class RigidTransformation:
                 if i == 0:
                     pairplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o',
                                                alpha=0.3, edgecolor="black", linewidths=2,
-                                               label='sample realization',
-                                               color='white')
+                                               palette=palette_, #label='sample realization', ?
+                                               hue=self.df_idx[response])
                 else:
-                    pairplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o',
-                                               alpha=0.1, edgecolor="black",
-                                               legend=False, color='white')
+                    pairplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o', palette=palette_,
+                                               alpha=0.1, legend=False, hue=self.df_idx[response])
 
             # Expectation of stabilized solution over all realizations for each sample
             array_exp = np.mean(self.calc_real, axis=0)
 
             # Plot the expectation of all realizations on the scatter plot
-            sns.scatterplot(x=array_exp[0, :], y=array_exp[1, :], s=10, marker='s', linewidths=2,
+            sns.scatterplot(x=array_exp[0, :], y=array_exp[1, :], s=25, marker='x', linewidths=4,
                             alpha=1, color='k', edgecolor="black", label='expectation',
                             legend=True)
 
@@ -673,16 +675,16 @@ class RigidTransformation:
 
             # Plot lines between each data point in realizations and its corresponding value in the
             # expectation array
-            for j in range(0, len(self.calc_real)):
-                for i in range(array_exp.shape[1]):
-                    if i == 0 and j == 0:
-                        plt.plot([np.transpose(self.calc_real[j][0, i]), array_exp[0, i]],
-                                 [np.transpose(self.calc_real[j][1, i]), array_exp[1, i]],
-                                 'r-', lw=2, alpha=0.1, label='sample perturbation')
-                    else:
-                        plt.plot([np.transpose(self.calc_real[j][0, i]), array_exp[0, i]],
-                                 [np.transpose(self.calc_real[j][1, i]), array_exp[1, i]],
-                                 'r-', lw=2, alpha=0.1)
+            # for j in range(0, len(self.calc_real)):
+            #     for i in range(array_exp.shape[1]):
+            #         if i == 0 and j == 0:
+            #             plt.plot([np.transpose(self.calc_real[j][0, i]), array_exp[0, i]],
+            #                      [np.transpose(self.calc_real[j][1, i]), array_exp[1, i]],
+            #                      'r-', lw=2, alpha=0.1, label='sample perturbation')
+            #         else:
+            #             plt.plot([np.transpose(self.calc_real[j][0, i]), array_exp[0, i]],
+            #                      [np.transpose(self.calc_real[j][1, i]), array_exp[1, i]],
+            #                      'r-', lw=2, alpha=0.1)
 
             # Aesthetics
             pairplot.set_xlabel(Ax)
@@ -912,7 +914,8 @@ class RigidTransformation:
         plt.show()
 
     @staticmethod
-    def convex_hull(array, title, x_off, y_off, Ax, Ay, expectation_compute=True, n_case=True, annotate=True, save=True):
+    def convex_hull(array, title, x_off, y_off, Ax, Ay, expectation_compute=True, make_figure=True, n_case=True,
+                    annotate=True, save=True):
         # Using samples from either n-case or n+1 case scenario to make a convex hull i.e., convex polygon
 
         if expectation_compute is True:
@@ -933,34 +936,36 @@ class RigidTransformation:
 
         else:
 
-            if n_case is True:
-                # Make sample point visuals for N samples case
-                plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='white', edgecolors="black")
+            if make_figure:
+                if n_case is True:
+                    # Make sample point visuals for N samples case
+                    plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='white', edgecolors="black")
 
-            else:
-                # Make sample point visuals of added sample in N+1 samples case
-                plt.scatter(my_points[:-1, 0], my_points[:-1, 1], marker='o', s=50, color='white', edgecolors="black")
-                plt.scatter(my_points[-1, 0], my_points[-1, 1], marker='*', s=90, color='black', edgecolors="black")
 
-            if annotate:
-                # Annotate sample index
-                for index, label in enumerate(range(1, len(my_points[:, 0]) + 1)):
-                    plt.annotate(label, (my_points[:, 0][index] + x_off, my_points[:, 1][index] + y_off), size=8,
-                                 style='italic')
+                else:
+                    # Make sample point visuals of added sample in N+1 samples case
+                    plt.scatter(my_points[:-1, 0], my_points[:-1, 1], marker='o', s=50, color='white', edgecolors="black")
+                    plt.scatter(my_points[-1, 0], my_points[-1, 1], marker='*', s=90, color='black', edgecolors="black")
 
-            # Make figure to visualize convex hull polygon and highlight polygon formed
-            for simplex in hull.simplices:
-                plt.plot(my_points[simplex, 0], my_points[simplex, 1], 'r--')  # k-
-                plt.fill(my_points[hull.vertices, 0], my_points[hull.vertices, 1], c='yellow', alpha=0.01)
+                if annotate:
+                    # Annotate sample index
+                    for index, label in enumerate(range(1, len(my_points[:, 0]) + 1)):
+                        plt.annotate(label, (my_points[:, 0][index] + x_off, my_points[:, 1][index] + y_off), size=8,
+                                     style='italic')
 
-            # Aesthetics
-            plt.title(title)
-            plt.xlabel(Ax)
-            plt.ylabel(Ay)
-            if save:
-                plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+                # Make figure to visualize convex hull polygon and highlight polygon formed
+                for simplex in hull.simplices:
+                    plt.plot(my_points[simplex, 0], my_points[simplex, 1], 'r--')  # k-
+                    plt.fill(my_points[hull.vertices, 0], my_points[hull.vertices, 1], c='yellow', alpha=0.01)
 
-            plt.show()
+                # Aesthetics
+                plt.title(title)
+                plt.xlabel(Ax)
+                plt.ylabel(Ay)
+                if save:
+                    plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+
+                plt.show()
             return my_points, hull, vertices
 
     def marginal_dbn(self, save=True):
@@ -1019,7 +1024,7 @@ class RigidTransf_NPlus(RigidTransformation):
         self.stable_coords_alldata = None
 
 
-    def stabilize_anchors(self, array1, array2, hull_1, hull_2):
+    def stabilize_anchors(self, array1, array2, hull_1, hull_2, normalize_projections=True):
         # Obtain the anchor points for n and n+1 scenarios
         vertices_index = hull_1.vertices
         vertices2_index = hull_2.vertices
@@ -1050,6 +1055,10 @@ class RigidTransf_NPlus(RigidTransformation):
 
         # Create a convex hull polygon of the normalized stabilized anchor points. Set this as an assertion!
         stable_coords_anchors = np.transpose(new_coord_anchors[:2, :])
+
+        if normalize_projections:
+            scaler = StandardScaler()
+            stable_coords_anchors = scaler.fit_transform(stable_coords_anchors)
 
         # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario
         # to obtain the now stabilized solution for every sample point.
