@@ -203,6 +203,53 @@ def generate_random_seeds(seed, num_realizations, lower_bound, upper_bound):
     return random_seeds
 
 
+def rigid_transform_2D(A, B, verbose=False):
+    """
+    Performs a rigid transformation (rotation and translation) on 2D point sets A and B.
+
+    :param A: 2xN matrix of points
+    :param B: 2xN matrix of points
+    :return: R: 2x2 rotation matrix, t: 2x1 translation vector
+    """
+
+    assert A.shape == B.shape
+
+    num_rows, num_cols = A.shape
+
+    if num_rows != 2:
+        raise Exception(f"matrix A is not 3xN, it is {num_rows}x{num_cols}")
+
+    num_rows, num_cols = B.shape
+    if num_rows != 2:
+        raise Exception(f"matrix B is not 3xN, it is {num_rows}x{num_cols}")
+
+    # Find the centroids (mean) of each point set
+    centroid_A = np.mean(A, axis=1)
+    centroid_B = np.mean(B, axis=1)
+
+    # Center the point sets by subtracting the centroids
+    centered_A = A - np.expand_dims(centroid_A, axis=1)
+    centered_B = B - np.expand_dims(centroid_B, axis=1)
+
+    # Perform SVD on the centered point sets
+    H = centered_A @ centered_B.T
+    U, S, Vt = np.linalg.svd(H)
+
+    # Calculate the rotation matrix R
+    R = Vt.T @ U.T
+
+    # special reflection case
+    if np.linalg.det(R) < 0 and verbose:
+        print("det(R) < 0, reflection detected!, solution corrected for it")
+        Vt[2, :] *= -1
+        R = Vt.T @ U.T
+
+    # Calculate the translation vector t
+    t = centroid_B - R @ centroid_A
+
+    return R, t
+
+
 def rigid_transform_3D(A, B, verbose=False):
     """
     This function fits a rigid transform to a set of 3D points.
@@ -372,7 +419,8 @@ def make_sample_within_ci(dataframe):
 
 
 class RigidTransformation:
-    def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric):
+    def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
+                 dim_projection):
         """
 
         Parameters: TODO
@@ -385,6 +433,7 @@ class RigidTransformation:
         start_seed
         stop_seed
         dissimilarity_metric
+        dim_projection # Based on user input of the LDS i.e., if 3d or 2d
         """
         self.df_idx = df.copy()
         self.df = standardizer(df, features, keep_only_std_features=True)
@@ -395,6 +444,7 @@ class RigidTransformation:
         self.start_seed = start_seed
         self.stop_seed = stop_seed
         self.dissimilarity_metric = dissimilarity_metric
+        self.dim_projection = dim_projection.upper()
 
         self.random_seeds = None
         self.all_real = None
@@ -453,7 +503,14 @@ class RigidTransformation:
             norm_stress.append(stress_1)  # [Poor > 0.2 > Fair > 0.1 > Good > 0.05 > Excellent > 0.025 > Perfect > 0.0]
             mds1.append(mds_transformed_subset[:, 0])
             mds2.append(mds_transformed_subset[:, 1])
-            real_i = np.column_stack((mds1[i], mds2[i], [0] * len(mds1[i])))  # stack projections for all realizations
+
+            if self.dim_projection == '2D':  # i.e., if LDS is 2D
+                real_i = np.column_stack((mds1[i], mds2[i]))  # stack projections for all realizations
+            elif self.dim_projection == '3D': # i.e., if LDS is 3D
+                real_i = np.column_stack((mds1[i], mds2[i], [0] * len(mds1[i]))) # stack projections for all realizations
+            else:
+                raise TypeError("Use an LDS projection of '2D' or '3D' as dim_projection variable input in class.")
+
             all_real.append(real_i)
 
         # Make the LD space invariant to  translation, rotation, reflection/flipping, This applies the proposed
@@ -461,7 +518,12 @@ class RigidTransformation:
 
         for i in range(1, len(all_real)):
             # Recover the rotation and translation matrices, R,T respectively for each realization
-            ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+
+            if self.dim_projection == '2D':  # i.e., if LDS is 2D
+                ret_R, ret_T = rigid_transform_2D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+            elif self.dim_projection == '3D': # i.e., if LDS is 3D
+                ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+
             t.append(ret_T)
             r.append(ret_R)
 
@@ -1012,8 +1074,10 @@ class RigidTransformation:
 
 
 class RigidTransf_NPlus(RigidTransformation):
-    def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric):
-        super().__init__(df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric)
+    def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
+                 dim_projection):
+        super().__init__(df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
+                         dim_projection)
         self.anchors1 = None
         self.anchors1 = None
         self.anchors2 = None
@@ -1035,42 +1099,77 @@ class RigidTransf_NPlus(RigidTransformation):
 
         # Get anchors for n-case scenario
         case1_anchors = array1[vertices_index]
-        anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1], [0] * len(case1_anchors)))
 
         # Get anchors for n+1 case scenario
         case2_anchors = array2[vertices2_index]
-        anchors2 = np.column_stack((case2_anchors[:, 0], case2_anchors[:, 1], [0] * len(case2_anchors)))
+
+        if self.dim_projection == '2D':  # i.e., if LDS is 2D
+            anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1]))
+            anchors2 = np.column_stack((case2_anchors[:, 0], case2_anchors[:, 1]))
+        elif self.dim_projection == '3D':  # i.e., if LDS is 3D
+            anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1], [0] * len(case1_anchors)))
+            anchors2 = np.column_stack((case2_anchors[:, 0], case2_anchors[:, 1], [0] * len(case2_anchors)))
+        else:
+            raise TypeError("Use an LDS projection of '2D' or '3D' as dim_projection variable input in class.")
 
         # Recover the rotation and translation matrices R,t, respectively for the stable anchor points in n+1 to
         # match anchors in the n-case scenario
-        R_anchors, t_anchors = rigid_transform_3D(np.transpose(anchors2), np.transpose(anchors1))
+        if self.dim_projection == '2D':  # i.e., if LDS is 2D
+            R_anchors, t_anchors = rigid_transform_2D(np.transpose(anchors2), np.transpose(anchors1))
 
-        # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
-        # of R, t
-        new_coord_anchors = (R_anchors @ np.transpose(anchors2)) + t_anchors
+            # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
+            # of R, t
+            new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + t_anchors  # inside was anchors2 before
+            R_anchors_, t_anchors_ = rigid_transform_2D(new_coord_anchors, np.transpose(anchors1))
+            new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + t_anchors_
+
+        elif self.dim_projection == '3D':  # i.e., if LDS is 3D
+            R_anchors, t_anchors = rigid_transform_3D(np.transpose(anchors2), np.transpose(anchors1))
+
+            # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
+            # of R, t
+            new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + t_anchors  # inside was anchors2 before
+            R_anchors_, t_anchors_ = rigid_transform_3D(new_coord_anchors, np.transpose(anchors1))
+            new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + t_anchors_
 
         # Find the rmse as an error check between estimated anchor points in n+1 scenario and anchor points in
         # n-scenario
-        rmse_err_anchors = rmse(new_coord_anchors, anchors1)
+        rmse_err_anchors = rmse(new_coord_anchors_, anchors1) # remove hyphen at end?
 
         # Create a convex hull polygon of the normalized stabilized anchor points. Set this as an assertion!
-        stable_coords_anchors = np.transpose(new_coord_anchors[:2, :])
+        stable_coords_anchors = np.transpose(new_coord_anchors_[:2, :]) # remove hyphen at end?
 
         if normalize_projections:
             scaler = StandardScaler()
             stable_coords_anchors = scaler.fit_transform(stable_coords_anchors)
 
-        # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario
-        # to obtain the now stabilized solution for every sample point.
-        stable_anchors_array = np.column_stack((array2[:, 0], array2[:, 1], [0] * len(array2)))
-        new_coords_alldata = (R_anchors @ np.transpose(stable_anchors_array)) + t_anchors
+        if self.dim_projection == '2D':  # i.e., if LDS is 2D
+            anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1]))
+            anchors2 = np.column_stack((case2_anchors[:, 0], case2_anchors[:, 1]))
+            stable_anchors_array = np.column_stack((array2[:len(array2)-1, 0], array2[:len(array2)-1, 1]))
+
+            # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario
+            # to obtain the now stabilized solution for every sample point.
+            R_all, t_all = rigid_transform_2D(np.transpose(stable_anchors_array), np.transpose(array1))
+            new_coords_alldata = (R_all @ np.transpose(stable_anchors_array)) + np.expand_dims(t_all, axis=1)
+
+        elif self.dim_projection == '3D':  # i.e., if LDS is 3D
+            anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1], [0] * len(case1_anchors)))
+            anchors2 = np.column_stack((case2_anchors[:, 0], case2_anchors[:, 1], [0] * len(case2_anchors)))
+            stable_anchors_array = np.column_stack((array2[:len(array2)-1, 0], array2[:len(array2)-1, 1], [0] * (len(array2)-1)))
+
+            # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario
+            # to obtain the now stabilized solution for every sample point.
+            R_all, t_all = rigid_transform_3D(np.transpose(stable_anchors_array), np.transpose(array1))
+            new_coords_alldata = (R_all @ np.transpose(stable_anchors_array)) + t_all
+
         stable_coords_alldata = np.transpose(new_coords_alldata[:2, :])
 
         # Update
         self.anchors1 = anchors1
         self.anchors2 = anchors2
-        self.R_anchors = R_anchors
-        self.t_anchors = t_anchors
+        self.R_anchors = R_anchors_ # remove hyphen at end?
+        self.t_anchors = t_anchors_ # remove hyphen at end?
         self.rmse_err_anchors = rmse_err_anchors
         self.stable_coords_anchors = stable_coords_anchors
         self.stable_coords_alldata = stable_coords_alldata
