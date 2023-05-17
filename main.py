@@ -40,7 +40,9 @@ def get_args_parser():
     parser.add_argument('--idx', default='Well', type=str, help="""Sample name in knowledge domain """)
     parser.add_argument('-dm', '--dissimilarity_metric', default='euclidean', type=str,
                         help="""Dissimilarity metric type """)
-
+    parser.add_argument('--dim_projection', default='2D', type=str, help="""Dimensionality of LDS""")
+    parser.add_argument('--normalize_projections', default=False, type=bool, help="""Ensures scale is homogeneous""")
+    parser.add_argument('--make_figure', default=False, type=bool, help="""Toggle for convex hull figure""")
     return parser
 
 
@@ -68,15 +70,15 @@ def autoresampling(dataframe, N, args):
     obj1 = RT.RigidTransformation(df=df_subset1, features=args.features, idx=args.idx,
                                   num_realizations=args.num_realizations, base_seed=args.base_seed,
                                   start_seed=args.start_seed, stop_seed=args.stop_seed,
-                                  dissimilarity_metric=args.dissimilarity_metric)
+                                  dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection)
 
     # Run rigid MDS
-    random_seeds, all_real, calc_real, all_rmse, norm_stress = obj1.run_rigid_MDS()
+    random_seeds, all_real, calc_real, all_rmse, norm_stress = obj1.run_rigid_MDS(normalize_projections=args.normalize_projections)
     E1 = obj1.expectation(r_idx=args.bc_idx, Ax=Ax1, Ay=Ay1, verbose=False)
 
     my_points, hull, vertices = obj1.convex_hull(
         array=all_real, title='N sample case', x_off=0.025, y_off=0.03, Ax=Ax1, Ay=Ay1, expectation_compute=False,
-        save=False)
+        save=False, make_figure=args.make_figure)
 
     ######################
     # N + 1 case
@@ -84,14 +86,14 @@ def autoresampling(dataframe, N, args):
     obj2 = RT.RigidTransf_NPlus(df=df_subset2, features=args.features, idx=args.idx,
                                 num_realizations=args.num_realizations,
                                 base_seed=args.base_seed, start_seed=args.start_seed, stop_seed=args.stop_seed,
-                                dissimilarity_metric=args.dissimilarity_metric)
+                                dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection)
 
     # Run rigid MDS
-    random_seeds2, all_real2, calc_real2, all_rmse2, norm_stress2 = obj2.run_rigid_MDS()  # NEED
+    random_seeds2, all_real2, calc_real2, all_rmse2, norm_stress2 = obj2.run_rigid_MDS(normalize_projections=args.normalize_projections)  # NEED
     # Find convex hull polygon
     my_points2, hull2, vertices2 = obj2.convex_hull(array=all_real2, title='N+1 sample case', x_off=0.025, y_off=0.03,
                                                     Ax=Ax1, Ay=Ay1, expectation_compute=False, n_case=False,
-                                                    save=False)  # 0.05,0.015
+                                                    save=False, make_figure=args.make_figure)  # 0.05,0.015
 
     _, _, _, _, rmse_err_anchors, _, _ = obj2.stabilize_anchors(
         array1=my_points, array2=my_points2, hull_1=hull, hull_2=hull2)  # NEED
@@ -102,7 +104,7 @@ def autoresampling(dataframe, N, args):
     E2 = obj2.expectation(r_idx=args.bc_idx, Ax=Ax1, Ay=Ay1, verbose=False)
     my_points_expected, hull_expected, vertices_expected = obj2.convex_hull(
         array=E2, title='Expectation of N+1 sample case', x_off=x_off1, y_off=y_off1, Ax=Ax1, Ay=Ay1,
-        expectation_compute=True, n_case=False, save=False
+        expectation_compute=True, n_case=False, save=False, make_figure=args.make_figure
     )
 
     _, _, _, _, rmse_err_anchors_exp, _, _ = obj2.stabilize_anchors(
@@ -134,3 +136,11 @@ if __name__ == '__main__':
         AllRmse2[index_] = rmse2
         RmseAnchors[index_] = rmse_err1
         RmseAnchorsExp[index_] = rmse_err2
+
+    # Save the lists of arrays to NPY files for 100 realizations at each N-value specified
+    np.save('NormStress1_AllReal.npy', NormStress1)  # Normalized kruskal stress1 for N-sample case
+    np.save('NormStress2_AllReal.npy', NormStress2)  # Normalized kruskal stress1 for N+1 sample case
+    np.save('AllRmse1_AllReal.npy', AllRmse1)  #  RMSE for N-sample case
+    np.save('AllRmse2_AllReal.npy', AllRmse2)  #  RMSE for N+1 sample case
+    np.save('RmseAnchors_AllReal.npy', RmseAnchors) # RMSE for N-sample case
+    np.save('RmseAnchorsExp_AllReal.npy', RmseAnchorsExp)

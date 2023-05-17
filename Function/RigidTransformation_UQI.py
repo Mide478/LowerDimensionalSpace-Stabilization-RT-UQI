@@ -535,16 +535,21 @@ class RigidTransformation:
 
             if self.dim_projection == '2D':  # i.e., if LDS is 2D
                 ret_R, ret_T = rigid_transform_2D(np.transpose(all_real[i]), np.transpose(all_real[0]))
+                t.append(ret_T)
+                r.append(ret_R)
+                # Compare the recovered R and T with the base case by creating a new coordinate scheme via prior
+                # solutions of r, and t
+                new_coord = (ret_R @ np.transpose(all_real[i])) + np.expand_dims(ret_T, axis=1)
+                calc_real.append(new_coord)
+
             elif self.dim_projection == '3D':  # i.e., if LDS is 3D
                 ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
-
-            t.append(ret_T)
-            r.append(ret_R)
-
-            # Compare the recovered R and T with the base case by creating a new coordinate scheme via prior
-            # solutions of r, and t
-            new_coord = (ret_R @ np.transpose(all_real[i])) + ret_T
-            calc_real.append(new_coord)
+                t.append(ret_T)
+                r.append(ret_R)
+                # Compare the recovered R and T with the base case by creating a new coordinate scheme via prior
+                # solutions of r, and t
+                new_coord = (ret_R @ np.transpose(all_real[i])) + ret_T
+                calc_real.append(new_coord)
 
             # Find the rmse as an error check between corrected realization and base case
             rmse_err = rmse(new_coord, all_real[0])
@@ -950,7 +955,7 @@ class RigidTransformation:
             dists = dists[nonzero]
             projected_dists = manhattan_distances(stabilized_expected_proj).ravel()[nonzero]
 
-        elif norm_type == 'OTHER':
+        elif norm_type == 'L1':
             dists = euclidean_distances(self.df, squared=False).ravel()
             nonzero = dists != 0  # select only non-identical samples pairs
             dists = dists[nonzero]
@@ -1134,12 +1139,11 @@ class RigidTransf_NPlus(RigidTransformation):
         # match anchors in the n-case scenario
         if self.dim_projection == '2D':  # i.e., if LDS is 2D
             R_anchors, t_anchors = rigid_transform_2D(np.transpose(anchors2), np.transpose(anchors1))
-
             # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
             # of R, t
-            new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + t_anchors  # inside was anchors2 before
+            new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + np.expand_dims(t_anchors, axis=1)  # inside was anchors2 before
             R_anchors_, t_anchors_ = rigid_transform_2D(new_coord_anchors, np.transpose(anchors1))
-            new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + t_anchors_
+            new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + np.expand_dims(t_anchors_, axis=1)
 
         elif self.dim_projection == '3D':  # i.e., if LDS is 3D
             R_anchors, t_anchors = rigid_transform_3D(np.transpose(anchors2), np.transpose(anchors1))
@@ -1169,7 +1173,7 @@ class RigidTransf_NPlus(RigidTransformation):
             # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario
             # to obtain the now stabilized solution for every sample point.
             R_all, t_all = rigid_transform_2D(np.transpose(stable_anchors_array), np.transpose(array1))
-            new_coords_alldata = (R_all @ np.transpose(stable_anchors_array)) + np.expand_dims(t_all, axis=1)
+            new_coords_alldata = (R_all @ np.transpose(array2)) + np.expand_dims(t_all, axis=1)
 
         elif self.dim_projection == '3D':  # i.e., if LDS is 3D
             anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1], [0] * len(case1_anchors)))
@@ -1179,7 +1183,7 @@ class RigidTransf_NPlus(RigidTransformation):
             # Use the R and t matrix from the stabilized anchor solution and apply it to all samples in the n+1 scenario
             # to obtain the now stabilized solution for every sample point.
             R_all, t_all = rigid_transform_3D(np.transpose(stable_anchors_array), np.transpose(array1))
-            new_coords_alldata = (R_all @ np.transpose(stable_anchors_array)) + t_all
+            new_coords_alldata = (R_all @ np.transpose(array2)) + t_all
 
         stable_coords_alldata = np.transpose(new_coords_alldata[:2, :])
 
