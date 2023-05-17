@@ -77,8 +77,8 @@ def autoresampling(dataframe, N, args):
     E1 = obj1.expectation(r_idx=args.bc_idx, Ax=Ax1, Ay=Ay1, verbose=False)
 
     my_points, hull, vertices = obj1.convex_hull(
-        array=all_real, title='N sample case', x_off=0.025, y_off=0.03, Ax=Ax1, Ay=Ay1, expectation_compute=False,
-        save=False, make_figure=args.make_figure)
+        array=all_real, title='N sample case', x_off=0.025, y_off=0.03, Ax=Ax1, Ay=Ay1, make_figure=args.make_figure,
+        expectation_compute=False, save=False)
 
     ######################
     # N + 1 case
@@ -96,7 +96,7 @@ def autoresampling(dataframe, N, args):
                                                     save=False, make_figure=args.make_figure)  # 0.05,0.015
 
     _, _, _, _, rmse_err_anchors, _, _ = obj2.stabilize_anchors(
-        array1=my_points, array2=my_points2, hull_1=hull, hull_2=hull2)  # NEED
+        array1=my_points, array2=my_points2, hull_1=hull, hull_2=hull2, normalize_projections=args.normalize_projections)  # NEED
 
     ######################
     # Section 3

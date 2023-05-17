@@ -1142,7 +1142,7 @@ class RigidTransf_NPlus(RigidTransformation):
             # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
             # of R, t
             new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + np.expand_dims(t_anchors, axis=1)  # inside was anchors2 before
-            R_anchors_, t_anchors_ = rigid_transform_2D(new_coord_anchors, np.transpose(anchors1))
+            R_anchors_, t_anchors_ = rigid_transform_2D(new_coord_anchors, np.transpose(anchors1)) #?
             new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + np.expand_dims(t_anchors_, axis=1)
 
         elif self.dim_projection == '3D':  # i.e., if LDS is 3D
@@ -1151,7 +1151,7 @@ class RigidTransf_NPlus(RigidTransformation):
             # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
             # of R, t
             new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + t_anchors  # inside was anchors2 before
-            R_anchors_, t_anchors_ = rigid_transform_3D(new_coord_anchors, np.transpose(anchors1))
+            R_anchors_, t_anchors_ = rigid_transform_3D(new_coord_anchors, np.transpose(anchors1))  #?
             new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + t_anchors_
 
         # Find the rmse as an error check between estimated anchor points in n+1 scenario and anchor points in
@@ -1187,6 +1187,10 @@ class RigidTransf_NPlus(RigidTransformation):
 
         stable_coords_alldata = np.transpose(new_coords_alldata[:2, :])
 
+        # Find the rmse as an error check between estimated stabilized points for all data in N+1 scenario and base case
+        # in N-sample scenario
+        rmse_err_alldata = rmse(new_coords_alldata, array2)
+
         # Update
         self.anchors1 = anchors1
         self.anchors2 = anchors2
@@ -1195,7 +1199,7 @@ class RigidTransf_NPlus(RigidTransformation):
         self.rmse_err_anchors = rmse_err_anchors
         self.stable_coords_anchors = stable_coords_anchors
         self.stable_coords_alldata = stable_coords_alldata
-        return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata
+        return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata, rmse_err_alldata
 
     def stable_anchor_visuals(self, Ax, Ay, x_off, y_off, annotate=True, save=True):
         # Visualization of base case and stabilized solution
