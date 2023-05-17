@@ -5,7 +5,6 @@ import numpy as np
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import numpy as np
 import seaborn as sns
 from pydist2.distance import pdist1
 from scipy.spatial import ConvexHull
@@ -18,9 +17,11 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 # TURN OFF ALL GRIDS either via sns or plt.
-sns.set_style("whitegrid", {'axes.grid' : False})
+# noinspection PyTypeChecker
+sns.set_style("whitegrid", {'axes.grid': False})
 
 
+# noinspection PyStatementEffect
 def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_adj, wspace, hspace, title, palette_,
                    hue_=None, n_case=True, save=True):
     """
@@ -51,6 +52,10 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
     classification label
 
     hue_: string variable that is used to color matrix scatter plot made
+
+    n_case:
+
+    save:
     """
 
     # Hue assignment
@@ -127,14 +132,15 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
 
 def make_levels(data, cat_response, num_response):
 
-    bins = [0,2500,5000,7500,10000]                              # assign the production bins (these are the fence posts)
+    bins = [0, 2500, 5000, 7500, 10000]                              # assign the production bins (these are the fence posts)
     labels = ['low', 'med', 'high', 'vhigh']                     # assign the labels
-    category = pd.cut(data[num_response],bins,labels=labels)     # make the 1D array with the labels for our data
+    category = pd.cut(data[num_response], bins, labels=labels)     # make the 1D array with the labels for our data
     data[cat_response] = category                                # add the new ordinal production feature to our DataFrames
 
     return data
 
 
+# noinspection PyTypeChecker
 def standardizer(dataset, features, keep_only_std_features=False):
     """
     This function standardizes  the dataframe of choice to a mean of 0 and variance of 1 whilst preserving its natural
@@ -169,6 +175,7 @@ def standardizer(dataset, features, keep_only_std_features=False):
     return df
 
 
+# noinspection PyTypeChecker
 def normalizer(array):
     arr = array.copy()
     df = pd.DataFrame(arr)
@@ -210,6 +217,11 @@ def rigid_transform_2D(A, B, verbose=False):
     :param A: 2xN matrix of points
     :param B: 2xN matrix of points
     :return: R: 2x2 rotation matrix, t: 2x1 translation vector
+
+    Parameters
+    ----------
+
+    verbose
     """
 
     assert A.shape == B.shape
@@ -317,6 +329,7 @@ def rigid_transform_3D(A, B, verbose=False):
     return R, t
 
 
+# noinspection PyUnboundLocalVariable
 def is_convex_polygon(polygon):
     """Return True if the polynomial defined by the sequence of 2D points is 'strictly convex': points are valid,
     side lengths non-zero, interior angles are strictly between zero and a straight angle, and the polygon does not
@@ -383,8 +396,8 @@ def rmse(array1, array2):
     var1 = np.transpose(array1) - array2
     var1 = var1 * var1
     var1 = np.sum(var1)
-    rmse = np.sqrt(var1 / len(array1[0, :]))
-    return rmse
+    rmse_error = np.sqrt(var1 / len(array1[0, :]))
+    return rmse_error
 
 
 def make_sample_within_ci(dataframe):
@@ -418,6 +431,7 @@ def make_sample_within_ci(dataframe):
     return data
 
 
+# noinspection PyUnboundLocalVariable
 class RigidTransformation:
     def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
                  dim_projection):
@@ -506,8 +520,8 @@ class RigidTransformation:
 
             if self.dim_projection == '2D':  # i.e., if LDS is 2D
                 real_i = np.column_stack((mds1[i], mds2[i]))  # stack projections for all realizations
-            elif self.dim_projection == '3D': # i.e., if LDS is 3D
-                real_i = np.column_stack((mds1[i], mds2[i], [0] * len(mds1[i]))) # stack projections for all realizations
+            elif self.dim_projection == '3D':  # i.e., if LDS is 3D
+                real_i = np.column_stack((mds1[i], mds2[i], [0] * len(mds1[i])))  # stack projections for all realizations
             else:
                 raise TypeError("Use an LDS projection of '2D' or '3D' as dim_projection variable input in class.")
 
@@ -521,7 +535,7 @@ class RigidTransformation:
 
             if self.dim_projection == '2D':  # i.e., if LDS is 2D
                 ret_R, ret_T = rigid_transform_2D(np.transpose(all_real[i]), np.transpose(all_real[0]))
-            elif self.dim_projection == '3D': # i.e., if LDS is 3D
+            elif self.dim_projection == '3D':  # i.e., if LDS is 3D
                 ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
 
             t.append(ret_T)
@@ -608,8 +622,8 @@ class RigidTransformation:
                                    str(self.random_seeds[k - 1]))
 
                 if annotate:
-                    for l, txt in enumerate(self.df_idx[self.idx]):
-                        pairplot.annotate(txt, (self.calc_real[k][0][l] + x_off, self.calc_real[k][1][l] + y_off), size=10,
+                    for index_, txt in enumerate(self.df_idx[self.idx]):
+                        pairplot.annotate(txt, (self.calc_real[k][0][index_] + x_off, self.calc_real[k][1][index_] + y_off), size=10,
                                           style='italic')
 
             # Add base case to subplot for direct comparison of stabilized solution obtained
@@ -621,8 +635,8 @@ class RigidTransformation:
             pairplot.set_title(title[0] + str(r_idx[0]) + " at seed " + str(self.random_seeds[0]))
 
             if annotate:
-                for m, txt in enumerate(self.df_idx[self.idx]):
-                    pairplot.annotate(txt, (self.all_real[0][:, 0][m] + x_off, self.all_real[0][:, 1][m] + y_off),
+                for index_, txt in enumerate(self.df_idx[self.idx]):
+                    pairplot.annotate(txt, (self.all_real[0][:, 0][index_] + x_off, self.all_real[0][:, 1][index_] + y_off),
                                       size=10, style='italic')
 
         # Figure info
@@ -642,6 +656,9 @@ class RigidTransformation:
 
         Parameters
         ----------
+        x_off
+        y_off
+        annotate
         palette_
         response
         title
@@ -716,7 +733,7 @@ class RigidTransformation:
                 if i == 0:
                     pairplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o',
                                                alpha=0.3, edgecolor="black", linewidths=2,
-                                               palette=palette_, #label='sample realization', ?
+                                               palette=palette_,  #label='sample realization', ?
                                                hue=self.df_idx[response])
                 else:
                     pairplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o', palette=palette_,
@@ -1073,6 +1090,7 @@ class RigidTransformation:
         plt.show()
 
 
+# noinspection PyUnboundLocalVariable
 class RigidTransf_NPlus(RigidTransformation):
     def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
                  dim_projection):
@@ -1134,10 +1152,10 @@ class RigidTransf_NPlus(RigidTransformation):
 
         # Find the rmse as an error check between estimated anchor points in n+1 scenario and anchor points in
         # n-scenario
-        rmse_err_anchors = rmse(new_coord_anchors_, anchors1) # remove hyphen at end?
+        rmse_err_anchors = rmse(new_coord_anchors_, anchors1)  # remove hyphen at end?
 
         # Create a convex hull polygon of the normalized stabilized anchor points. Set this as an assertion!
-        stable_coords_anchors = np.transpose(new_coord_anchors_[:2, :]) # remove hyphen at end?
+        stable_coords_anchors = np.transpose(new_coord_anchors_[:2, :])  # remove hyphen at end?
 
         if normalize_projections:
             scaler = StandardScaler()
@@ -1168,8 +1186,8 @@ class RigidTransf_NPlus(RigidTransformation):
         # Update
         self.anchors1 = anchors1
         self.anchors2 = anchors2
-        self.R_anchors = R_anchors_ # remove hyphen at end?
-        self.t_anchors = t_anchors_ # remove hyphen at end?
+        self.R_anchors = R_anchors_  # remove hyphen at end?
+        self.t_anchors = t_anchors_  # remove hyphen at end?
         self.rmse_err_anchors = rmse_err_anchors
         self.stable_coords_anchors = stable_coords_anchors
         self.stable_coords_alldata = stable_coords_alldata
@@ -1245,4 +1263,3 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
         plt.show()
         return
-
