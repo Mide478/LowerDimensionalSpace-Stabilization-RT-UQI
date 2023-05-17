@@ -53,7 +53,7 @@ def autoresampling(dataframe, N, args):
     # Add category for response variable i.e., production levels for complete dataset
     df_temp = RT.make_levels(data=dataframe, cat_response=args.cat_response, num_response=args.num_response)
     df_subset1 = df_temp.iloc[:N, 1:-1]  # dataframe for n case
-    df_subset2 = RT.make_sample_within_ci(df_subset1.copy())  # dataframe for n+1 case
+    df_subset2, random_seed_used = RT.make_sample_within_ci(df_subset1.copy())  # dataframe for n+1 case
     df_subset2.insert(
         0, args.idx, np.arange(1, len(df_subset2) + 1)
     )  # Insert well column index back into data frame for N+1 case
@@ -110,8 +110,9 @@ def autoresampling(dataframe, N, args):
     _, _, _, _, rmse_err_anchors_exp, _, _, rmse_err_all_exp = obj2.stabilize_anchors(
         array1=my_points, array2=my_points_expected, hull_1=hull, hull_2=hull_expected)
 
-    return np.array(norm_stress), np.array(norm_stress2), np.array(all_rmse), np.array(all_rmse2), \
-           np.array(rmse_err_anchors), np.array(rmse_err_anchors_exp), np.array(rmse_err_all), np.array(rmse_err_all_exp)
+    return np.array(random_seed_used), np.array(norm_stress), np.array(norm_stress2), np.array(all_rmse),\
+           np.array(all_rmse2), np.array(rmse_err_anchors), np.array(rmse_err_anchors_exp), np.array(rmse_err_all), \
+           np.array(rmse_err_all_exp)
 
 
 if __name__ == '__main__':
@@ -121,6 +122,7 @@ if __name__ == '__main__':
     N_VALUES = range(args_.N_start, args_.N_end, args_.N_step)
 
     # instantiate arrays of zeros
+    RandomSeed = np.zeros(len(N_VALUES))
     NormStress1 = np.zeros((len(N_VALUES), args_.num_realizations))
     NormStress2 = np.zeros((len(N_VALUES), args_.num_realizations))
     AllRmse1 = np.zeros((len(N_VALUES), args_.num_realizations-1))
@@ -133,7 +135,8 @@ if __name__ == '__main__':
     for index_, N in enumerate(N_VALUES):
         print(f"Processing N = {N}...")
         try:
-            ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2, rmse_all1, rmse_all2 = autoresampling(df, N, args_)
+            seed, ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2, rmse_all1, rmse_all2 = autoresampling(df, N, args_)
+            RandomSeed[index_] = seed
             NormStress1[index_] = ns1
             NormStress2[index_] = ns2
             AllRmse1[index_] = rmse1
@@ -147,6 +150,7 @@ if __name__ == '__main__':
             break  # stop the loop if an error occurs
 
     # Save the lists of arrays to NPY files for 100 realizations at each N-value specified
+    np.save('RandomSeed_AllReal.npy', RandomSeed)  # Random Seed array used to generate OOSP for each N-case [4, 100, 1]
     np.save('NormStress1_AllReal.npy', NormStress1)  # Normalized kruskal stress1 for N-sample case
     np.save('NormStress2_AllReal.npy', NormStress2)  # Normalized kruskal stress1 for N+1 sample case
     np.save('AllRmse1_AllReal.npy', AllRmse1)  #  RMSE for N-sample case

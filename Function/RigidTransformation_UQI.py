@@ -739,8 +739,7 @@ class RigidTransformation:
                 if i == 0:
                     pairplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o',
                                                alpha=0.3, edgecolor="black", linewidths=2,
-                                               palette=palette_,  #label='sample realization', ?
-                                               hue=self.df_idx[response])
+                                               palette=palette_, hue=self.df_idx[response])
                 else:
                     pairplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o', palette=palette_,
                                                alpha=0.1, legend=False, hue=self.df_idx[response])
@@ -915,8 +914,7 @@ class RigidTransformation:
         pairplot.set_xlabel(Ax)
         pairplot.set_ylabel(Ay)
         pairplot.set_title(
-            "Expectation of Stabilized Solutions over " + str(self.num_realizations) + " realizations")  # subtract
-        # num_realizations from 1 since base case is a realization too?!
+            "Expectation of Stabilized Solutions over " + str(self.num_realizations) + " realizations")
 
         plt.subplots_adjust(left=0.0, bottom=0.0, right=2., top=1., wspace=0.3, hspace=0.3, )
         if save:
@@ -1110,6 +1108,8 @@ class RigidTransf_NPlus(RigidTransformation):
         self.rmse_err_anchors = None
         self.stable_coords_anchors = None
         self.stable_coords_alldata = None
+        self.common_vertices_index = None
+        self.common_vertices2_index = None
 
 
     def stabilize_anchors(self, array1, array2, hull_1, hull_2, normalize_projections=True):
@@ -1144,7 +1144,7 @@ class RigidTransf_NPlus(RigidTransformation):
             # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
             # of R, t
             new_coord_anchors = (R_anchors @ np.transpose(anchors2)) + np.expand_dims(t_anchors, axis=1)
-            R_anchors_, t_anchors_ = rigid_transform_2D(new_coord_anchors, np.transpose(anchors1)) #?
+            R_anchors_, t_anchors_ = rigid_transform_2D(new_coord_anchors, np.transpose(anchors1))
             new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + np.expand_dims(t_anchors_, axis=1)
 
         elif self.dim_projection == '3D':  # i.e., if LDS is 3D
@@ -1153,15 +1153,15 @@ class RigidTransf_NPlus(RigidTransformation):
             # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
             # of R, t
             new_coord_anchors = (R_anchors @ np.transpose(anchors2)) + t_anchors
-            R_anchors_, t_anchors_ = rigid_transform_3D(new_coord_anchors, np.transpose(anchors1))  #?
+            R_anchors_, t_anchors_ = rigid_transform_3D(new_coord_anchors, np.transpose(anchors1))
             new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + t_anchors_
 
         # Find the rmse as an error check between estimated anchor points in n+1 scenario and anchor points in
         # n-scenario
-        rmse_err_anchors = rmse(new_coord_anchors_, anchors1)  # remove hyphen at end?
+        rmse_err_anchors = rmse(new_coord_anchors_, anchors1)
 
         # Create a convex hull polygon of the normalized stabilized anchor points. Set this as an assertion!
-        stable_coords_anchors = np.transpose(new_coord_anchors_[:2, :])  # remove hyphen at end?
+        stable_coords_anchors = np.transpose(new_coord_anchors_[:2, :])
 
         if normalize_projections:
             scaler = StandardScaler()
@@ -1196,12 +1196,15 @@ class RigidTransf_NPlus(RigidTransformation):
         # Update
         self.anchors1 = anchors1
         self.anchors2 = anchors2
-        self.R_anchors = R_anchors_  # remove hyphen at end?
-        self.t_anchors = t_anchors_  # remove hyphen at end?
+        self.R_anchors = R_anchors_
+        self.t_anchors = t_anchors_
         self.rmse_err_anchors = rmse_err_anchors
         self.stable_coords_anchors = stable_coords_anchors
         self.stable_coords_alldata = stable_coords_alldata
-        return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata, rmse_err_alldata
+        self.common_vertices_index = common_vertices_index + 1  # +1 accounts for Python's indexing starting from 0
+        self.common_vertices2_index = common_vertices2_index + 1  # +1 accounts for Python's indexing starting from 0
+        return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata,\
+               rmse_err_alldata
 
     def stable_anchor_visuals(self, Ax, Ay, x_off, y_off, annotate=True, save=True):
         # Visualization of base case and stabilized solution
@@ -1211,7 +1214,7 @@ class RigidTransf_NPlus(RigidTransformation):
         ax0.scatter(self.anchors1[:, 0], self.anchors1[:, 1], marker='o', s=50, color='blue', edgecolors="black")
 
         if annotate:
-            for index, label in enumerate(range(1, len(self.anchors1) + 1)):
+            for index, label in enumerate(self.common_vertices_index):
                 ax0.annotate(label, (self.anchors1[:, 0][index] + x_off, self.anchors1[:, 1][index] + y_off),
                              size=10, style='italic')
         ax0.set_aspect('auto')
@@ -1224,7 +1227,7 @@ class RigidTransf_NPlus(RigidTransformation):
         ax1.scatter(self.anchors2[:, 0], self.anchors2[:, 1], marker='o', s=50, color='blue', edgecolors="black")
 
         if annotate:
-            for index, label in enumerate(range(1, len(self.anchors2) + 1)):
+            for index, label in enumerate(self.common_vertices2_index):
                 ax1.annotate(label, (self.anchors2[:, 0][index] + x_off, self.anchors2[:, 1][index] + y_off),
                              size=10, style='italic')
         ax1.set_aspect('auto')
@@ -1238,7 +1241,7 @@ class RigidTransf_NPlus(RigidTransformation):
                     edgecolors="black")
 
         if annotate:
-            for index, label in enumerate(range(1, len(self.stable_coords_anchors[:, 0]) + 1)):
+            for index, label in enumerate(self.common_vertices_index):
                 ax2.annotate(label, (self.stable_coords_anchors[:, 0][index] + x_off,
                                      self.stable_coords_anchors[:, 1][index] + y_off), size=10, style='italic')
         ax2.set_aspect('auto')
