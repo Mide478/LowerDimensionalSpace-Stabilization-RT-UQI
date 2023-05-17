@@ -95,7 +95,7 @@ def autoresampling(dataframe, N, args):
                                                     Ax=Ax1, Ay=Ay1, expectation_compute=False, n_case=False,
                                                     save=False, make_figure=args.make_figure)  # 0.05,0.015
 
-    _, _, _, _, rmse_err_anchors, _, _ = obj2.stabilize_anchors(
+    _, _, _, _, rmse_err_anchors, _, _, rmse_err_all = obj2.stabilize_anchors(
         array1=my_points, array2=my_points2, hull_1=hull, hull_2=hull2, normalize_projections=args.normalize_projections)  # NEED
 
     ######################
@@ -107,11 +107,11 @@ def autoresampling(dataframe, N, args):
         expectation_compute=True, n_case=False, save=False, make_figure=args.make_figure
     )
 
-    _, _, _, _, rmse_err_anchors_exp, _, _ = obj2.stabilize_anchors(
+    _, _, _, _, rmse_err_anchors_exp, _, _, rmse_err_all_exp = obj2.stabilize_anchors(
         array1=my_points, array2=my_points_expected, hull_1=hull, hull_2=hull_expected)
 
     return np.array(norm_stress), np.array(norm_stress2), np.array(all_rmse), np.array(all_rmse2), \
-           np.array(rmse_err_anchors), np.array(rmse_err_anchors_exp)
+           np.array(rmse_err_anchors), np.array(rmse_err_anchors_exp), np.array(rmse_err_all), np.array(rmse_err_all_exp)
 
 
 if __name__ == '__main__':
@@ -127,20 +127,31 @@ if __name__ == '__main__':
     AllRmse2 = np.zeros((len(N_VALUES), args_.num_realizations-1))
     RmseAnchors = np.zeros(len(N_VALUES))
     RmseAnchorsExp = np.zeros(len(N_VALUES))
+    RmseData = np.zeros(len(N_VALUES))
+    RmseDataExp = np.zeros(len(N_VALUES))
 
     for index_, N in enumerate(N_VALUES):
-        ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2 = autoresampling(df, N, args_)
-        NormStress1[index_] = ns1
-        NormStress2[index_] = ns2
-        AllRmse1[index_] = rmse1
-        AllRmse2[index_] = rmse2
-        RmseAnchors[index_] = rmse_err1
-        RmseAnchorsExp[index_] = rmse_err2
+        print(f"Processing N = {N}...")
+        try:
+            ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2, rmse_all1, rmse_all2 = autoresampling(df, N, args_)
+            NormStress1[index_] = ns1
+            NormStress2[index_] = ns2
+            AllRmse1[index_] = rmse1
+            AllRmse2[index_] = rmse2
+            RmseAnchors[index_] = rmse_err1
+            RmseAnchorsExp[index_] = rmse_err2
+            RmseData[index_] = rmse_all1
+            RmseDataExp[index_] = rmse_all2
+        except Exception as e:
+            print(f"Error occurred at N = {N}: {e}")
+            break  # stop the loop if an error occurs
 
     # Save the lists of arrays to NPY files for 100 realizations at each N-value specified
     np.save('NormStress1_AllReal.npy', NormStress1)  # Normalized kruskal stress1 for N-sample case
     np.save('NormStress2_AllReal.npy', NormStress2)  # Normalized kruskal stress1 for N+1 sample case
     np.save('AllRmse1_AllReal.npy', AllRmse1)  #  RMSE for N-sample case
     np.save('AllRmse2_AllReal.npy', AllRmse2)  #  RMSE for N+1 sample case
-    np.save('RmseAnchors_AllReal.npy', RmseAnchors) # RMSE for N-sample case
-    np.save('RmseAnchorsExp_AllReal.npy', RmseAnchorsExp)
+    np.save('RmseAnchors_AllReal.npy', RmseAnchors)  # RMSE for N-sample case anchors
+    np.save('RmseAnchorsExp_AllReal.npy', RmseAnchorsExp)  # RMSE for expectation N+1 case anchors
+    np.save('RmseData_AllReal.npy', RmseData)  # RMSE for all N+1 sample points
+    np.save('RmseDataExp_AllReal.npy', RmseDataExp)  # RMSE for expectation of all N+1 sample case?

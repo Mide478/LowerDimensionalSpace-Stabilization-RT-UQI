@@ -411,7 +411,8 @@ def make_sample_within_ci(dataframe):
     """
 
     # Set random seed for reproducibility
-    np.random.seed(42)
+    random_seed = np.random.randint(0, 100000)
+    np.random.seed(random_seed)
 
     # Calculate mean, standard deviation, and bounds for each column
     n = len(dataframe)
@@ -428,7 +429,7 @@ def make_sample_within_ci(dataframe):
 
     # Add to dataframe
     data = dataframe.copy().append(sampled_row, ignore_index=True)
-    return data
+    return data, random_seed
 
 
 # noinspection PyUnboundLocalVariable
@@ -1116,15 +1117,16 @@ class RigidTransf_NPlus(RigidTransformation):
         vertices_index = hull_1.vertices
         vertices2_index = hull_2.vertices
 
-        # Make sure the indexes of the anchor points from the data and check if the anchor points from scenario n
-        # is in scenario n+1 array as well
-        data_index_present = vertices_index[np.isin(vertices_index, vertices2_index)]  # set as an assertion?
+        # Find the common anchor points/vertices between anchors in N and N+1 sample case
+        common_indexes = np.isin(vertices_index, vertices2_index)
 
-        # Get anchors for n-case scenario
-        case1_anchors = array1[vertices_index]
+        # Extract the common indexes from vertices_index and vertices2_index
+        common_vertices_index = np.intersect1d(vertices_index, vertices2_index)
+        common_vertices2_index = np.intersect1d(vertices2_index, vertices_index)
 
-        # Get anchors for n+1 case scenario
-        case2_anchors = array2[vertices2_index]
+        # Access the corresponding anchor points using the common indexes
+        case1_anchors = array1[common_vertices_index]
+        case2_anchors = array2[common_vertices2_index]
 
         if self.dim_projection == '2D':  # i.e., if LDS is 2D
             anchors1 = np.column_stack((case1_anchors[:, 0], case1_anchors[:, 1]))
@@ -1141,7 +1143,7 @@ class RigidTransf_NPlus(RigidTransformation):
             R_anchors, t_anchors = rigid_transform_2D(np.transpose(anchors2), np.transpose(anchors1))
             # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
             # of R, t
-            new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + np.expand_dims(t_anchors, axis=1)  # inside was anchors2 before
+            new_coord_anchors = (R_anchors @ np.transpose(anchors2)) + np.expand_dims(t_anchors, axis=1)
             R_anchors_, t_anchors_ = rigid_transform_2D(new_coord_anchors, np.transpose(anchors1)) #?
             new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + np.expand_dims(t_anchors_, axis=1)
 
@@ -1150,7 +1152,7 @@ class RigidTransf_NPlus(RigidTransformation):
 
             # Compare the recovered R and t with the original by creating a new coordinate scheme via prior solutions
             # of R, t
-            new_coord_anchors = (R_anchors @ np.transpose(anchors1)) + t_anchors  # inside was anchors2 before
+            new_coord_anchors = (R_anchors @ np.transpose(anchors2)) + t_anchors
             R_anchors_, t_anchors_ = rigid_transform_3D(new_coord_anchors, np.transpose(anchors1))  #?
             new_coord_anchors_ = (R_anchors_ @ new_coord_anchors) + t_anchors_
 
