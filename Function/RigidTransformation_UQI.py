@@ -79,7 +79,7 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
         last_marker = '*'
 
         # Create pairplot
-        fig = sns.pairplot(data=dataframe, vars=feat_title, diag_kws={'edgecolor': 'black'},
+        fig = sns.pairplot(data=dataframe[:-1], vars=feat_title, diag_kws={'edgecolor': 'black'},
                            plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
                            markers='o', palette=palette_)
 

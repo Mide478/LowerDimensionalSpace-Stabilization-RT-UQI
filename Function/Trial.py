@@ -22,7 +22,7 @@ sns.set_style("whitegrid", {'axes.grid': False})
 
 
 def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_adj, wspace, hspace, title, palette_,
-                   hue_=None, n_case=True, save=True):
+                   hue_=None, num_OOSP=None, n_case=True, save=True):
     """
     This function plots the matrix scatter plot for the given data.
 
@@ -50,6 +50,8 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
         Integer representing the color palette to use.
     hue_ : str, optional
         Variable used to color the matrix scatter plot.
+    num_OOSP : int, optional
+        Number of OOSP samples added within the 95% confidence interval
     n_case : bool, optional
         Determines if N_case visuals are used.
     save : bool, optional
@@ -79,27 +81,31 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
         last_marker = '*'
 
         # Create pairplot
-        fig = sns.pairplot(data=dataframe, vars=feat_title, diag_kws={'edgecolor': 'black'},
+        fig = sns.pairplot(data=dataframe[:-num_OOSP], vars=feat_title, diag_kws={'edgecolor': 'black'},
                            plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
                            markers='o', palette=palette_)
 
-        # Plot the last datapoint with a different marker type in all subplots
-        for i, feat1 in enumerate(feat_title):
-            for j, feat2 in enumerate(feat_title):
-                if i == j:
-                    continue
-                ax = fig.axes[i, j]
-                if ax is not None:
-                    last_datapoint = dataframe[[feat2, feat1]].iloc[-1].values
-                    hue_value = dataframe[hue_][len(dataframe) - 1]
+        # Plot the OOSP's with a stars marker type in all subplots
+        if num_OOSP is not None:
+            last_data = dataframe.iloc[-num_OOSP:]
+            for i, feat1 in enumerate(feat_title):
+                for j, feat2 in enumerate(feat_title):
+                    if i == j:
+                        continue
+                    ax = fig.axes[i, j]
+                    if ax is not None:
+                        for _, row in last_data.iterrows():
+                            last_datapoint = row[[feat2, feat1]].values
+                            hue_value = row[hue_]
 
-                    if hue_value in ('low', 'med', 'high', 'vhigh'):
-                        color_index = ['low', 'med', 'high', 'vhigh'].index(hue_value)
-                        color = palette_[color_index]
-                        ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=color,
-                                   edgecolors="black", linewidth=0.5)
+                            if hue_value in ('low', 'med', 'high', 'vhigh'):
+                                color_index = ['low', 'med', 'high', 'vhigh'].index(hue_value)
+                                color = palette_[color_index]
+                                ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=color,
+                                           edgecolors="black", linewidth=0.5)
 
     plt.subplots_adjust(left=left_adj, bottom=bottom_adj, right=right_adj, top=top_adj, wspace=wspace, hspace=hspace)
+
     if save:
         plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
     plt.show()
@@ -432,7 +438,7 @@ def rmse(array1, array2):
     return rmse_error
 
 
-def make_sample_within_ci(dataframe):
+def make_sample_within_ci(dataframe, num_OOSP):
     """
     Sample a single row from a dataframe of multiple columns such that it is within a 95% confidence interval (CI).
 
@@ -440,19 +446,20 @@ def make_sample_within_ci(dataframe):
     ---------
     dataframe : pandas DataFrame
         Original dataset with predictors to make OOSP
+    num_OOSP : int
+        Number of OOSP samples to add within the 95% confidence interval to the dataframe
 
     Returns
     -------
     data : pandas DataFrame
         DataFrame with a single row of sampled values from each column, such that each value falls within
         a 95% confidence interval of the original dataset.
-    random_seed : int
-        random state used to generate OOSP
+    random_seed : list
+        List of random states used to generate OOSP's
     """
 
-    # Set random seed for reproducibility
-    random_seed = np.random.randint(0, 100000)
-    np.random.seed(random_seed)
+    # Initialize list to store random seeds
+    random_seeds = []
 
     # Calculate mean, standard deviation, and bounds for each column
     n = len(dataframe)
@@ -462,14 +469,24 @@ def make_sample_within_ci(dataframe):
     lower_bounds, upper_bounds = means - t * (stds / np.sqrt(n)), means + t * (stds / np.sqrt(n))
 
     # Generate random values within 95% CI for each column
-    samples = np.random.uniform(lower_bounds, upper_bounds)
+    samples = []
+    for _ in range(num_OOSP):
+
+        # Set random seed for reproducibility
+        random_seed = np.random.randint(0, 100000)
+        np.random.seed(random_seed)
+        random_seeds.append(random_seed)
+
+        # Generate random values within 95% CI for each column
+        sample = np.random.uniform(lower_bounds, upper_bounds)
+        samples.append(sample)
 
     # Combine sampled values into single row
-    sampled_row = pd.DataFrame([samples], columns=dataframe.columns)
+    sampled_data = pd.DataFrame(samples, columns=dataframe.columns)
 
     # Add to dataframe
-    data = dataframe.copy().append(sampled_row, ignore_index=True)
-    return data, random_seed
+    data = dataframe.copy().append(sampled_data, ignore_index=True)
+    return data, random_seeds
 
 
 class RigidTransformation:
