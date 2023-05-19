@@ -30,7 +30,7 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
     ---------
     dataframe : pandas DataFrame
         The input data.
-    feat_title : list of string
+    feat_title : list of str
         Column names of the predictor features.
     left_adj : float
         Left placement adjustment of the scatter plot.
@@ -44,11 +44,11 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
         Width placement adjustment of the scatter plot.
     hspace : float
         Height placement adjustment of the scatter plot.
-    title : string
+    title : str
         Name of the figure.
     palette_ : int
         Integer representing the color palette to use.
-    hue_ : string, optional
+    hue_ : str, optional
         Variable used to color the matrix scatter plot.
     n_case : bool, optional
         Determines if N_case visuals are used.
@@ -115,9 +115,9 @@ def make_levels(data, cat_response, num_response):
 
     data : pandas DataFrame
         The input data.
-    cat_response : string
+    cat_response : str
         The column name for the new categorical response variable.
-    num_response : string
+    num_response : str
         The column name for the numerical response variable.
 
     Returns
@@ -131,7 +131,6 @@ def make_levels(data, cat_response, num_response):
 
     # Use pd.cut() to create the categorical response variable based on the numerical response and predefined bins
     data[cat_response] = pd.cut(data[num_response], bins, labels=labels)
-
     return data
 
 
@@ -143,7 +142,7 @@ def standardizer(dataset, features, keep_only_std_features=False):
     ---------
     dataset : pandas.DataFrame
         The input dataframe containing the features to be standardized.
-    features : list of string
+    features : list of str
         The column names of the features to be standardized.
     keep_only_std_features : bool, optional
         Specifies whether to keep only the standardized features in the resulting dataframe.
@@ -158,20 +157,24 @@ def standardizer(dataset, features, keep_only_std_features=False):
 
     """
 
-    if isinstance(features, str):
+    is_string = isinstance(features, str)
+    if is_string:
         features = [features]
 
     df = dataset.copy()
-    scaler = StandardScaler()
-    df[['NS_' + feat for feat in features]] = scaler.fit_transform(df[features])
+    x = df.loc[:, features].values
+    xs = StandardScaler().fit_transform(x)
+
+    ns_feats = []
+    for i, feature in enumerate(features):
+        df['NS_' + feature] = xs[:, i]
+        ns_feats.append('NS_' + feature)
 
     if keep_only_std_features:
-        df.drop(features, axis=1, inplace=True)
-
+        df = df.loc[:, ns_feats]
     return df
 
 
-# noinspection PyTypeChecker
 def normalizer(array):
     """
     Normalizes the values of an array to a specified range.
@@ -190,7 +193,6 @@ def normalizer(array):
 
     scaler = MinMaxScaler(feature_range=(-4, 4))
     normalized_array = scaler.fit_transform(array)
-
     return normalized_array
 
 
@@ -218,7 +220,6 @@ def generate_random_seeds(seed, num_realizations, lower_bound, upper_bound):
 
     random.seed(seed)
     random_seeds = [random.randint(lower_bound, upper_bound) for _ in range(num_realizations)]
-
     return random_seeds
 
 
@@ -272,7 +273,6 @@ def rigid_transform_2D(A, B, verbose=False):
 
     # Calculate the translation vector t
     t = centroid_B - R @ centroid_A
-
     return R, t
 
 
@@ -334,11 +334,9 @@ def rigid_transform_3D(A, B, verbose=False):
 
     # Calculate the translation vector t
     t = -R @ (centroid_A + centroid_B)
-
     return R, t
 
 
-# noinspection PyTypeChecker,PyUnresolvedReferences,PyUnboundLocalVariable
 def is_convex_polygon(polygon):
     """
     Checks if the polygon defined by the sequence of 2D points is a strictly convex polygon.
@@ -424,8 +422,7 @@ def rmse(array1, array2):
     Returns
     -------
     rmse_error : float
-        RMSE value.
-
+        RMSE value
     """
 
     var1 = np.transpose(array1) - array2
@@ -475,7 +472,6 @@ def make_sample_within_ci(dataframe):
     return data, random_seed
 
 
-# noinspection PyUnboundLocalVariable,PyUnusedLocal,PyTypeChecker
 class RigidTransformation:
     def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
                  dim_projection):
@@ -488,7 +484,7 @@ class RigidTransformation:
             The input DataFrame containing the data for rigid transformation.
         features : list
             A list of features column names to be used for transformation.
-        idx : string
+        idx : str
             The name of the index or UWI column in the DataFrame.
         num_realizations : int
             The number of realizations to generate.
@@ -498,12 +494,12 @@ class RigidTransformation:
             The starting seed value for realizations.
         stop_seed : int
             The stopping seed value for realizations.
-        dissimilarity_metric : string
+        dissimilarity_metric : str
             User-specified dissimilarity metric to be used for the NDR i.e., MDS computation.
-        dim_projection : string
+        dim_projection : str
             The dimension of the LDS projection (2D or 3D).
-
         """
+
         self.df_idx = df.copy()
         self.df = standardizer(df, features, keep_only_std_features=True)
         self.df_idx[idx] = np.arange(1, len(self.df) + 1).astype(int)
@@ -522,7 +518,7 @@ class RigidTransformation:
         self.norm_stress = None
         self.array_exp = None
 
-    # noinspection PyUnresolvedReferences
+
     def run_rigid_MDS(self, normalize_projections=True):
         """
         Runs the Rigid MDS algorithm for generating realizations.
@@ -547,26 +543,27 @@ class RigidTransformation:
             List of normalized stress values for each realization.
         """
 
+        # Arrays below store random values for each realization
         random_seeds = generate_random_seeds(self.base_seed, self.num_realizations, self.start_seed, self.stop_seed)
 
-        mds1 = []
-        mds2 = []
+        mds1 = []  # MDS projection 1
+        mds2 = []  # MDS projection 2
         norm_stress = []
-        all_real = []
+        all_real = []  # All realizations prepared for rigid transform
         t = []
         r = []
         all_rmse = []
-        calc_real = []
+        calc_real = []  # analytical estimation of each realization from R,T recovered
 
-        dissimilarity_metrics = ['euclidean', 'cityblock', 'mahalanobis', 'seuclidean', 'minkowski', 'chebyshev',
-                                 'cosine', 'correlation', 'spearman', 'hamming', 'jaccard']
+        dissimilarity_metrics = ["euclidean", "cityblock", "mahalanobis", "seuclidean", "minkowski", "chebyshev",
+                                 "cosine", "correlation", "spearman", "hamming", "jaccard"]
         dij_metric = self.dissimilarity_metric.lower()
 
         if dij_metric in dissimilarity_metrics:
             dij = pdist1(self.df.values, dij_metric)
             dij_matrix: None = distance.squareform(dij)
         else:
-            print("Use a dissimilarity metric present in pdist1 from pydist2 package")
+            raise ValueError("Use a dissimilarity metric present in pdist1 from pydist2 package")
 
         for i in range(0, self.num_realizations):
             embedding_subset = MDS(dissimilarity='precomputed', n_components=2, n_init=20, max_iter=1000,
@@ -587,21 +584,24 @@ class RigidTransformation:
             if self.dim_projection == '2D':
                 real_i = np.column_stack((mds1[i], mds2[i]))
             elif self.dim_projection == '3D':
-                real_i = np.column_stack((mds1[i], mds2[i], [0] * len(mds1[i])))
+                real_i = np.column_stack((mds1[i], mds2[i], np.zeros(len(mds1[i]))))
             else:
-                raise TypeError("Use an LDS projection of '2D' or '3D' as dim_projection variable input in class.")
+                raise ValueError("Use an LDS projection of '2D' or '3D' as dim_projection variable input in class.")
 
             all_real.append(real_i)
 
         # Make LDS invariant to Euclidean transformations as proposed.
         for i in range(1, len(all_real)):
-            if self.dim_projection == '2D':
+            # Recover the rotation and translation matrices, R,T respectively for each realization
+
+            if self.dim_projection == '2D':  # i.e., if LDS is 2D
                 ret_R, ret_T = rigid_transform_2D(np.transpose(all_real[i]), np.transpose(all_real[0]))
                 t.append(ret_T)
                 r.append(ret_R)
                 new_coord = (ret_R @ np.transpose(all_real[i])) + np.expand_dims(ret_T, axis=1)
                 calc_real.append(new_coord)
-            elif self.dim_projection == '3D':
+
+            elif self.dim_projection == '3D':  # i.e., if LDS is 3D
                 ret_R, ret_T = rigid_transform_3D(np.transpose(all_real[i]), np.transpose(all_real[0]))
                 t.append(ret_T)
                 r.append(ret_R)
@@ -611,114 +611,14 @@ class RigidTransformation:
             rmse_err = rmse(new_coord, all_real[0])  # estimated RT realization vs base case
             all_rmse.append(rmse_err)
 
-        # Update
+        #  Update
         self.random_seeds = random_seeds
         self.all_real = all_real
         self.calc_real = calc_real
         self.all_rmse = all_rmse
         self.norm_stress = norm_stress
-
         return random_seeds, all_real, calc_real, all_rmse, norm_stress
 
-    # def real_plotter(self, response, r_idx, Ax, Ay, title, x_off, y_off, cmap, array2=None, annotate=True, save=True):
-    #     """
-    #     Plots the realizations.
-    #
-    #     Arguments
-    #     ---------
-    #     response: string
-    #         The response feature to use for coloring the scatter plot.
-    #     r_idx : list
-    #         List of indices of realizations to plot.
-    #     Ax : string
-    #         Label for the x-axis.
-    #     Ay: string
-    #         Label for the y-axis.
-    #     title : list
-    #         List of titles for each subplot.
-    #     x_off : float
-    #         Offset value for x-axis annotations.
-    #     y_off : float
-    #         Offset value for y-axis annotations.
-    #     cmap : string or colormap object
-    #         Color map to use for coloring the scatter plot.
-    #     array2 : None or ndarray, optional
-    #         Array containing stabilized points per realization for comparison. Default is None.
-    #     annotate : bool, optional
-    #         Flag indicating whether to annotate the data points. Default is True.
-    #     save : bool, optional
-    #         Flag indicating whether to save the plot as an image. Default is True.
-    #
-    #     Returns
-    #     -------
-    #     None
-    #     """
-    #
-    #     if self.all_real is None:
-    #         raise TypeError("Run rung_rigid_MDS first.")
-    #
-    #     subplot_nos = len(r_idx)
-    #     num_cols = 2
-    #     if subplot_nos % num_cols == 0:
-    #         num_rows = subplot_nos // num_cols
-    #     else:
-    #         num_rows = (subplot_nos // num_cols) + 1
-    #
-    #     #  Make Plots
-    #     plt.figure()
-    #
-    #     if array2 is None:
-    #         for i in range(0, len(r_idx)):
-    #             ax = plt.subplot(num_rows, num_cols, i + 1)
-    #             pairplot = sns.scatterplot(x=self.all_real[i][:, 0], y=self.all_real[i][:, 1], hue=self.df_idx[response],
-    #                                        s=60, markers='o', palette=cmap, edgecolor="black", ax=ax)
-    #             pairplot.set_xlabel(Ax)
-    #             pairplot.set_ylabel(Ay)
-    #             pairplot.set_title(title[i] + str(r_idx[i]) + " at seed " + str(self.random_seeds[i]))
-    #
-    #             if annotate:
-    #                 for j, txt in enumerate(self.df_idx[self.idx]):
-    #                     pairplot.annotate(txt, (self.all_real[i][:, 0][j] + x_off, self.all_real[i][:, 1][j] + y_off),
-    #                                       size=10, style='italic')
-    #
-    #     else:
-    #         for k in range(1, len(r_idx)):
-    #             ax = plt.subplot(num_rows, num_cols, k)
-    #             pairplot = sns.scatterplot(x=self.calc_real[k][0], y=self.calc_real[k][1], hue=self.df_idx[response],
-    #                                        s=60, markers='o', palette=cmap, edgecolor="black", ax=ax)
-    #             pairplot.set_xlabel(Ax)
-    #             pairplot.set_ylabel(Ay)
-    #             pairplot.set_title("Stabilized solution for " + title[k].lower() + str(r_idx[k]) + " at seed " +
-    #                                str(self.random_seeds[k - 1]))
-    #
-    #             if annotate:
-    #                 for index_, txt in enumerate(self.df_idx[self.idx]):
-    #                     pairplot.annotate(txt, (self.calc_real[k][0][index_] + x_off, self.calc_real[k][1][index_] + y_off),
-    #                                       size=10, style='italic')
-    #
-    #         #  Add base case to the subplot for direct comparison of the stabilized solution obtained
-    #         ax = plt.subplot(num_rows, num_cols, k + 1)
-    #         pairplot = sns.scatterplot(x=self.all_real[0][:, 0], y=self.all_real[0][:, 1], hue=self.df_idx[response],
-    #                                    s=60, markers='o', palette=cmap, edgecolor="black", ax=ax)
-    #         pairplot.set_xlabel(Ax)
-    #         pairplot.set_ylabel(Ay)
-    #         pairplot.set_title(title[0] + str(r_idx[0]) + " at seed " + str(self.random_seeds[0]))
-    #
-    #         if annotate:
-    #             for index_, txt in enumerate(self.df_idx[self.idx]):
-    #                 pairplot.annotate(txt, (self.all_real[0][:, 0][index_] + x_off, self.all_real[0][:, 1][index_] + y_off),
-    #                                   size=10, style='italic')
-    #
-    #     ax.set_aspect('auto')
-    #     ax.legend(fontsize=11)
-    #     ax.tick_params(axis='both', which='major', labelsize=12)
-    #
-    #     plt.subplots_adjust(left=0.0, bottom=0.0, right=2., top=2., wspace=0.3, hspace=0.3)
-    #
-    #     if save:
-    #         plt.savefig('Variations with seeds 2x2 for data subset with tracking.tiff', dpi=300, bbox_inches='tight')
-    #
-    #     plt.show()
 
     def real_plotter(self, response, r_idx, Ax, Ay, title, x_off, y_off, cmap, array2=None, annotate=True, save=True):
         """
@@ -726,13 +626,13 @@ class RigidTransformation:
 
         Arguments
         ---------
-        response: string
+        response: str
             The response feature to use for coloring the scatter plot.
         r_idx : list
             List of indices of realizations to plot.
-        Ax : string
+        Ax : str
             Label for the x-axis.
-        Ay: string
+        Ay: str
             Label for the y-axis.
         title : list
             List of titles for each subplot.
@@ -740,7 +640,7 @@ class RigidTransformation:
             Offset value for x-axis annotations.
         y_off : float
             Offset value for y-axis annotations.
-        cmap : string or colormap object
+        cmap : str or colormap object
             Color map to use for coloring the scatter plot.
         array2 : None or ndarray, optional
             Array containing stabilized points per realization for comparison. Default is None.
@@ -825,12 +725,13 @@ class RigidTransformation:
             ax.legend(fontsize=11)
             ax.tick_params(axis='both', which='major', labelsize=12)
 
-        plt.subplots_adjust(left=0.0, bottom=0.0, right=2., top=2., wspace=0.3, hspace=0.3)
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.5, wspace=0.2, hspace=0.2)
 
         if save:
             plt.savefig('Variations with seeds 2x2 for data subset with tracking.tiff', dpi=300, bbox_inches='tight')
 
         plt.show()
+
 
     def bivariate_plotter(self, palette_, response, x_off, y_off, title, plot_type, Ax, Ay, annotate=True, save=True):
         """
@@ -840,19 +741,19 @@ class RigidTransformation:
         ---------
         palette_ : int
             Integer value indicating the color palette to use.
-        response : string
+        response : str
             The response variable to use for coloring the scatter plot.
         x_off : float
             Offset value for x-axis annotations.
         y_off : float
             Offset value for y-axis annotations.
-        title : string
+        title : str
             Title for the plot.
-        plot_type : string
+        plot_type : str
             Type of plot to create ('variation', 'jitters', or 'uncertainty').
-        Ax : string
+        Ax : str
             Label for the x-axis.
-        Ay : string
+        Ay : str
             Label for the y-axis.
         annotate : bool, optional
             Flag indicating whether to annotate the data points. Default is True.
@@ -890,6 +791,7 @@ class RigidTransformation:
                 scatterplot.set_xlabel(Ax)
                 scatterplot.set_ylabel(Ay)
                 scatterplot.set_title(title)
+                plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
                 if save:
                     plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
@@ -909,6 +811,7 @@ class RigidTransformation:
             scatterplot.set_xlabel(Ax)
             scatterplot.set_ylabel(Ay)
             scatterplot.set_title(title)
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
             if save:
                 plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
@@ -941,6 +844,7 @@ class RigidTransformation:
             scatterplot.set_xlabel(Ax)
             scatterplot.set_ylabel(Ay)
             scatterplot.set_title(title)
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
             plt.legend()
 
             if save:
@@ -952,6 +856,7 @@ class RigidTransformation:
         else:
             print("Use a plot_type of `variation`, `jitters`, or `uncertainty`")
 
+
     def expectation(self, r_idx, Ax, Ay, verbose=False):
         """
         Calculates the expectation of all the calc_real.
@@ -960,9 +865,9 @@ class RigidTransformation:
         ---------
         r_idx : int
             Base case realization index.
-        Ax : string
+        Ax : str
             Label for the x-axis.
-        Ay : string
+        Ay : str
             Label for the y-axis.
         verbose : bool, optional
             Flag indicating whether to print verbose output. Default is False.
@@ -972,6 +877,7 @@ class RigidTransformation:
         E : numpy.ndarray
             The expectation array.
         """
+
         if self.all_real is None:
             raise TypeError("Run run_rigid_MDS first.")
 
@@ -995,6 +901,7 @@ class RigidTransformation:
         self.array_exp = E
         return E
 
+
     def expect_plotter(self, r_idx, Lx, Ly, xmin, xmax, ymin, ymax, save=True):
         """
         Plots the distributions of NDR (MDS) projections for the base case and stabilized expectation.
@@ -1003,9 +910,9 @@ class RigidTransformation:
         ---------
         r_idx : int
             Base case realization index.
-        Lx : string
+        Lx : str
             Label for the x-direction projection.
-        Ly : string
+        Ly : str
             Label for the y-direction projection.
         xmin : float
             Minimum value for the x-axis.
@@ -1022,6 +929,7 @@ class RigidTransformation:
         -------
         None
         """
+
         if self.all_real is None:
             raise TypeError("Run run_rigid_MDS first.")
 
@@ -1050,19 +958,20 @@ class RigidTransformation:
                         dpi=300, bbox_inches='tight')
         plt.show()
 
+
     def compare_plot(self, response, r_idx, Ax, Ay, x_off, y_off, cmap, annotate=True, save=True):
         """
         Plots a comparison between the base case realization and the ensemble expectation of stabilized solutions.
 
         Arguments
         ---------
-        response : string
+        response : str
             Name of the response variable.
         r_idx : int
             Base case realization index.
-        Ax : string
+        Ax : str
             Label for the x-axis.
-        Ay : string
+        Ay : str
             Label for the y-axis.
         x_off : float
             Offset value for x-coordinate annotations.
@@ -1079,6 +988,7 @@ class RigidTransformation:
         -------
         None
         """
+
         if self.all_real is None:
             raise TypeError("Run run_rigid_MDS first.")
         if self.array_exp is None:
@@ -1096,6 +1006,7 @@ class RigidTransformation:
             scatterplot.set_xlabel(Ax)
             scatterplot.set_ylabel(Ay)
             scatterplot.set_title(title)
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1., wspace=0.2, hspace=0.3, )
 
         plot_scatter(axs[0], self.all_real[r_idx][:, 0], self.all_real[r_idx][:, 1],
                      self.df_idx[response], "Base case realization at seed " + str(self.random_seeds[r_idx]))
@@ -1104,12 +1015,11 @@ class RigidTransformation:
                      self.df_idx[response],
                      "Expectation of Stabilized Solutions over " + str(self.num_realizations) + " realizations")
 
-        plt.subplots_adjust(wspace=0.3)
-
         if save:
             plt.savefig('Stabilized independent result vs expectation of stabilized results.tiff', dpi=300,
                         bbox_inches='tight')
         plt.show()
+
 
     def visual_model_check(self, norm_type, fig_name, array, expectation_compute=True, save=True):
         """
@@ -1118,9 +1028,9 @@ class RigidTransformation:
 
         Arguments
         ---------
-        norm_type : string
+        norm_type : str
             The type of distance norm to use. Valid values are 'L2' and 'L1'.
-        fig_name : string
+        fig_name : str
             The name of the figure file to save.
         array : ndarray
             The array containing the projected data.
@@ -1138,7 +1048,6 @@ class RigidTransformation:
         ValueError
             If invalid norm_type is used
         """
-        dists, projected_dists = None, None
 
         stabilized_expected_proj = np.transpose(array[:2, :]) if expectation_compute else array.copy()
 
@@ -1205,6 +1114,7 @@ class RigidTransformation:
         plt.show()
         print(f"Distance Ratio, mean: {mean_rate:.4f}, standard deviation: {std_rate:.4f}.")
 
+
     @staticmethod
     def convex_hull(array, title, x_off, y_off, Ax, Ay, expectation_compute=True, make_figure=True, n_case=True,
                     annotate=True, save=True):
@@ -1215,15 +1125,15 @@ class RigidTransformation:
         ---------
         array : ndarray
             The array of points.
-        title : string
+        title : str
             The title of the plot.
         x_off : float
             The x-offset for annotation.
         y_off : float
             The y-offset for annotation.
-        Ax : string
+        Ax : str
             The label for the x-axis.
-        Ay : string
+        Ay : str
             The label for the y-axis.
         expectation_compute : bool, optional
             Flag indicating whether to compute the expectation of the stabilized solution. Default is True.
@@ -1238,10 +1148,11 @@ class RigidTransformation:
 
         Returns
         -------
-        tuple or string
+        tuple or str
             If the convex polygon assumption is met, returns a tuple containing the points, hull, and vertices.
             Otherwise, returns a string indicating that the convex polygon assumption is not met.
         """
+
         my_points = np.transpose(array[:2, :]) if expectation_compute else array[0][:, :2]
         hull = ConvexHull(my_points)
         vertices = my_points[hull.vertices]
@@ -1278,8 +1189,8 @@ class RigidTransformation:
                 plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
 
             plt.show()
-
         return my_points, hull, vertices
+
 
     def marginal_dbn(self, save=True):
         """
@@ -1295,6 +1206,7 @@ class RigidTransformation:
         -------
         None
         """
+
         ns_features = self.df.columns.tolist()
         N = 10
         fig, axs = plt.subplots(1, len(ns_features), figsize=(6 * len(ns_features), 4))
@@ -1334,7 +1246,7 @@ class RigidTransformation:
         return
 
 
-# noinspection PyTypeChecker,SpellCheckingInspection
+# noinspection PyUnboundLocalVariable
 class RigidTransf_NPlus(RigidTransformation):
     def __init__(self, df, features, idx, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
                  dim_projection):
@@ -1351,7 +1263,7 @@ class RigidTransf_NPlus(RigidTransformation):
         self.common_vertices_index = None
         self.common_vertices2_index = None
 
-    # noinspection PyUnboundLocalVariable
+
     def stabilize_anchors(self, array1, array2, hull_1, hull_2, normalize_projections=True):
         """
         Stabilizes anchor points between two arrays using convex hulls and rigid transformations.
@@ -1392,6 +1304,7 @@ class RigidTransf_NPlus(RigidTransformation):
         ------
         TypeError: If dim_projection is not '2D' or '3D'.
         """
+
         # Obtain the anchor points for n and n+1 scenarios
         vertices_index = hull_1.vertices
         vertices2_index = hull_2.vertices
@@ -1486,15 +1399,16 @@ class RigidTransf_NPlus(RigidTransformation):
         self.common_vertices2_index = common_vertices2_index + 1  # +1 accounts for Python's indexing starting from 0
         return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata, rmse_err_alldata
 
+
     def stable_anchor_visuals(self, Ax, Ay, x_off, y_off, annotate=True, save=True):
         """
         Visualizes the base case anchors, the N+1 case anchors, and the stabilized anchor solution.
 
         Arguments
         ---------
-        Ax : string
+        Ax : str
             Label for the x-axis.
-        Ay : string
+        Ay : str
             Label for the y-axis.
         x_off : float
             Offset for the x-coordinate of the annotations.
@@ -1509,6 +1423,7 @@ class RigidTransf_NPlus(RigidTransformation):
         -------
         None
         """
+
         #  Make plot
         fig, axes = plt.subplots(1, 3)
 
@@ -1557,6 +1472,7 @@ class RigidTransf_NPlus(RigidTransformation):
 
         plt.show()
 
+
     def stable_representation(self, title, Ax, Ay, x_off, y_off, sample_added, annotate=True, save=True):
         """
         Visualizes the n+1 case for all samples with a stabilized representation obtained in the n-case.
@@ -1564,11 +1480,11 @@ class RigidTransf_NPlus(RigidTransformation):
 
         Arguments
         ---------
-        title : string
+        title : str
             The title of the plot.
-        Ax : string
+        Ax : str
             The label for the x-axis.
-        Ay : string
+        Ay : str
             The label for the y-axis.
         x_off : float
             The offset value to adjust the x-coordinate of the annotations.
@@ -1585,6 +1501,7 @@ class RigidTransf_NPlus(RigidTransformation):
         -------
         None
         """
+
         fig, ax = plt.subplots()
         ax.scatter(self.stable_coords_alldata[:sample_added - 1, 0], self.stable_coords_alldata[:sample_added - 1, 1],
                    marker='o', s=50, color='white', edgecolors="black")
