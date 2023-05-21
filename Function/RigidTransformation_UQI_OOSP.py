@@ -1557,71 +1557,72 @@ class RigidTransf_NPlus(RigidTransformation):
         plt.show()
 
 
-    def maybe(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
+    # def maybe(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
+    #
+    #     if hue_ is not None:
+    #         cmap = "rocket_r" if palette_ == 1 else "bright"
+    #         categories = dataframe[hue_].unique()
+    #         num_categories = len(categories)
+    #
+    #         cmap = sns.color_palette(cmap, n_colors=num_categories)
+    #         category_to_color = dict(zip(categories, cmap))
+    #
+    #         scatter_colors = [category_to_color[category] for category in dataframe[hue_]]
+    #
+    #         # Create handles for legend
+    #         handles = [plt.scatter([], [], color=category_to_color[category], marker='o', label=category)
+    #                    for category in categories]
+    #
+    #     if n_case:
+    #         plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
+    #                     self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
+    #                     marker='o',
+    #                     s=50, linewidths=0.5,
+    #                     c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
+    #                     edgecolors="black")
+    #
+    #         if annotate:
+    #             for label, x, y in zip(range(1, len(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0]) + 1),
+    #                                    self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0] + self.x_off,
+    #                                    self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1] + self.y_off):
+    #                 plt.annotate(label, (x, y), size=8, style='italic')
+    #
+    #         # Aesthetics
+    #         plt.title(self.title)
+    #         plt.xlabel(self.Ax)
+    #         plt.ylabel(self.Ay)
+    #
+    #     else:
+    #         plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
+    #                     self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
+    #                     marker='o',
+    #                     s=50, linewidths=0.5,
+    #                     c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
+    #                     edgecolors="black")
+    #
+    #         plt.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
+    #                     self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
+    #                     marker='*',
+    #                     s=200, linewidths=0.5,
+    #                     c=scatter_colors[(len(self.stable_coords_alldata) - self.num_OOSP):],
+    #                     edgecolors="black")
+    #
+    #         if annotate:
+    #             for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
+    #                                    self.stable_coords_alldata[:, 0] + self.x_off,
+    #                                    self.stable_coords_alldata[:, 1] + self.y_off):
+    #                 plt.annotate(label, (x, y), size=8, style='italic')
+    #
+    #         # Aesthetics
+    #         plt.title(self.title)
+    #         plt.xlabel(self.Ax)
+    #         plt.ylabel(self.Ay)
+    #
+    #
+    #     plt.legend(handles=handles, loc="best", fontsize=12)
+    #     plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
+    #
+    #     if save:
+    #         plt.savefig(self.title + '.tiff', dpi=300, bbox_inches='tight')
+    #     plt.show()
 
-        if hue_ is not None:
-            cmap = "rocket_r" if palette_ == 1 else "bright"
-            categories = dataframe[hue_].unique()
-            num_categories = len(categories)
-
-            cmap = sns.color_palette(cmap, n_colors=num_categories)
-            category_to_color = dict(zip(categories, cmap))
-
-            scatter_colors = [category_to_color[category] for category in dataframe[hue_]]
-
-            # Create handles for legend
-            handles = [plt.scatter([], [], color=category_to_color[category], marker='o', label=category)
-                       for category in categories]
-
-        if n_case:
-            plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
-                        self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
-                        marker='o',
-                        s=50, linewidths=0.5,
-                        c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
-                        edgecolors="black")
-
-            if annotate:
-                for label, x, y in zip(range(1, len(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0]) + 1),
-                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0] + self.x_off,
-                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1] + self.y_off):
-                    plt.annotate(label, (x, y), size=8, style='italic')
-
-            # Aesthetics
-            plt.title(self.title)
-            plt.xlabel(self.Ax)
-            plt.ylabel(self.Ay)
-
-        else:
-            plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
-                        self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
-                        marker='o',
-                        s=50, linewidths=0.5,
-                        c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
-                        edgecolors="black")
-
-            plt.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
-                        self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
-                        marker='*',
-                        s=200, linewidths=0.5,
-                        c=scatter_colors[(len(self.stable_coords_alldata) - self.num_OOSP):],
-                        edgecolors="black")
-
-            if annotate:
-                for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
-                                       self.stable_coords_alldata[:, 0] + self.x_off,
-                                       self.stable_coords_alldata[:, 1] + self.y_off):
-                    plt.annotate(label, (x, y), size=8, style='italic')
-
-            # Aesthetics
-            plt.title(self.title)
-            plt.xlabel(self.Ax)
-            plt.ylabel(self.Ay)
-
-
-        plt.legend(handles=handles, loc="best", fontsize=12)
-        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
-
-        if save:
-            plt.savefig(self.title + '.tiff', dpi=300, bbox_inches='tight')
-        plt.show()
