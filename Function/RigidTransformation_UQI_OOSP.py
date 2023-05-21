@@ -1524,6 +1524,14 @@ class RigidTransf_NPlus(RigidTransformation):
         None
         """
 
+        # Update
+        self.Ax = Ax
+        self.Ay = Ay
+        self.x_off = x_off
+        self.y_off = y_off
+        self.title = title
+
+        # Make plot
         fig, ax = plt.subplots()
         ax.scatter(self.stable_coords_alldata[:sample_added - self.num_OOSP, 0], self.stable_coords_alldata[:sample_added - self.num_OOSP, 1],
                    marker='o', s=50, color='white', edgecolors="black")
@@ -1544,4 +1552,74 @@ class RigidTransf_NPlus(RigidTransformation):
         if save:
             plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
 
+        plt.show()
+
+
+    def maybe(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
+
+        if hue_ is not None:
+            cmap = "rocket_r" if palette_ == 1 else "bright"
+            categories = dataframe[hue_].unique()
+            num_categories = len(categories)
+
+            cmap = sns.color_palette(cmap, n_colors=num_categories)
+            category_to_color = dict(zip(categories, cmap))
+
+            scatter_colors = [category_to_color[category] for category in dataframe[hue_]]
+
+        else:
+            cmap = "rocket_r" if palette_ == 1 else "bright"
+            scatter_colors = sns.color_palette(cmap)
+
+        if n_case:
+            plt.scatter(self.stable_coords_alldata[:, 0],
+                        self.stable_coords_alldata[:, 1],
+                        marker='o',
+                        s=50, linewidths=0.5,
+                        c=scatter_colors,
+                        edgecolors="black")
+
+            if annotate:
+                for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
+                                       self.stable_coords_alldata[:, 0] + self.x_off,
+                                       self.stable_coords_alldata[:, 1] + self.y_off):
+                    plt.annotate(label, (x, y), size=8, style='italic')
+
+            # Aesthetics
+            plt.title(self.title)
+            plt.xlabel(self.Ax)
+            plt.ylabel(self.Ay)
+            plt.legend()
+
+        else:
+            plt.scatter(self.stable_coords_alldata[:self.num_OOSP, 0],
+                        self.stable_coords_alldata[:self.num_OOSP, 1],
+                        marker='o',
+                        s=50, linewidths=0.5,
+                        c=scatter_colors[:self.num_OOSP],
+                        edgecolors="black")
+
+            plt.scatter(self.stable_coords_alldata[self.num_OOSP:, 0],
+                        self.stable_coords_alldata[self.num_OOSP:, 1],
+                        marker='*',
+                        s=200, linewidths=0.5,
+                        c=scatter_colors[self.num_OOSP:],
+                        edgecolors="black")
+
+            if annotate:
+                for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
+                                       self.stable_coords_alldata[:, 0] + self.x_off,
+                                       self.stable_coords_alldata[:, 1] + self.y_off):
+                    plt.annotate(label, (x, y), size=8, style='italic')
+
+            # Aesthetics
+            plt.title(self.title)
+            plt.xlabel(self.Ax)
+            plt.ylabel(self.Ay)
+            plt.legend()
+
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
+
+        if save:
+            plt.savefig(self.title + '.tiff', dpi=300, bbox_inches='tight')
         plt.show()
