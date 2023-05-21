@@ -794,9 +794,9 @@ class RigidTransformation:
 
         #  Palette assignment
         if palette_ == 1:
-            palette_ = sns.color_palette("rocket_r", n_colors=len(np.unique(self.df_idx[response].values)))
+            palette_ = sns.color_palette("rocket_r", n_colors=len(np.unique(self.df_idx[response].values)) + 1)
         elif palette_ == 2:
-            palette_ = sns.color_palette("bright", n_colors=len(np.unique(self.df_idx[response].values)))
+            palette_ = sns.color_palette("bright", n_colors=len(np.unique(self.df_idx[response].values)) + 1)
         else:
             palette_ = None
 
