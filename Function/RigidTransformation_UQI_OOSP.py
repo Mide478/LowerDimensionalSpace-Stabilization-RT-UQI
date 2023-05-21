@@ -1207,6 +1207,8 @@ class RigidTransformation:
             plt.ylabel(Ay)
             plt.legend(loc="best", fontsize=12)
 
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
+
             if save:
                 plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
 
@@ -1568,9 +1570,15 @@ class RigidTransf_NPlus(RigidTransformation):
 
             scatter_colors = [category_to_color[category] for category in dataframe[hue_]]
 
-        else:
-            cmap = "rocket_r" if palette_ == 1 else "bright"
-            scatter_colors = sns.color_palette(cmap)
+            # Create an empty list to store the handles for the legend
+            handles = []
+
+            for category in categories:
+                if category in dataframe[hue_]:
+                    scatter_color = category_to_color[category]
+                    handle = plt.scatter([], [], color=scatter_color,label=category)  #
+                    handles.append(handle)
+
 
         if n_case:
             plt.scatter(self.stable_coords_alldata[self.num_OOSP:, 0],
@@ -1590,12 +1598,6 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.title(self.title)
             plt.xlabel(self.Ax)
             plt.ylabel(self.Ay)
-            plt.legend(loc="best", fontsize=14)
-
-            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
-
-            if save:
-                plt.savefig(self.title + '.tiff', dpi=300, bbox_inches='tight')
 
         else:
             plt.scatter(self.stable_coords_alldata[self.num_OOSP:, 0],
@@ -1622,8 +1624,9 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.title(self.title)
             plt.xlabel(self.Ax)
             plt.ylabel(self.Ay)
-            plt.legend(loc="best", fontsize=14)
 
+
+        plt.legend(handles=handles, loc="best", fontsize=14)
         plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
         if save:
