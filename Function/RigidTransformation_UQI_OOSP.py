@@ -1551,6 +1551,7 @@ class RigidTransf_NPlus(RigidTransformation):
         ax.set_xlabel(Ax)
         ax.set_ylabel(Ay)
         plt.legend(loc="best", fontsize=12)
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
         if save:
             plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
@@ -1576,7 +1577,7 @@ class RigidTransf_NPlus(RigidTransformation):
             for category in categories:
                 if category in dataframe[hue_]:
                     scatter_color = category_to_color[category]
-                    handle = plt.scatter([], [], color=scatter_color,label=category)  #
+                    handle = plt.scatter([], [], color=scatter_color, marker='o', label=category)  #
                     handles.append(handle)
 
 
