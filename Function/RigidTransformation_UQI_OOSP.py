@@ -459,7 +459,7 @@ def make_sample_within_ci(dataframe, num_OOSP):
     """
 
     # Initialize list to store random seeds
-    random_seeds = []
+    random_seeds = set()
 
     # Calculate mean, standard deviation, and bounds for each column
     n = len(dataframe)
@@ -470,12 +470,11 @@ def make_sample_within_ci(dataframe, num_OOSP):
 
     # Generate random values within 95% CI for each column
     samples = []
-    for _ in range(num_OOSP):
-
-        # Set random seed for reproducibility
+    while len(samples) < num_OOSP:
         random_seed = np.random.randint(0, 100000)
-        np.random.seed(random_seed)
-        random_seeds.append(random_seed)
+        if random_seed not in random_seeds:
+            np.random.seed(random_seed)
+            random_seeds.add(random_seed)
 
         # Generate random values within 95% CI for each column
         sample = np.random.uniform(lower_bounds, upper_bounds)
@@ -841,17 +840,17 @@ class RigidTransformation:
                 mds1_vec = np.transpose(calc_real[0, :])
                 mds2_vec = np.transpose(calc_real[1, :])
                 if i == 0:
-                    scatterplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o', alpha=0.3,
+                    scatterplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=60, markers='o', alpha=0.3,
                                                   edgecolor="black", linewidths=2, palette=palette_,
                                                   hue=self.df_idx[response])
                 else:
-                    scatterplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=30, markers='o', palette=palette_,
+                    scatterplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=60, markers='o', palette=palette_,
                                                   alpha=0.1,
                                                   legend=False, hue=self.df_idx[response])
 
             array_exp = np.mean(self.calc_real, axis=0)
 
-            sns.scatterplot(x=array_exp[0, :], y=array_exp[1, :], s=25, marker='x', linewidths=4,
+            sns.scatterplot(x=array_exp[0, :], y=array_exp[1, :], s=50, marker='x', linewidths=4,
                             alpha=1, color='k', edgecolor="black", label='expectation',
                             legend=True)
 
@@ -1188,11 +1187,11 @@ class RigidTransformation:
         if make_figure:
             if n_case:
                 #  For N-sample case
-                plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='white', edgecolors="black")
+                plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='white', label='sample', edgecolors="black")
             else:
                 #  For OOSP included case
-                plt.scatter(my_points[:-num_OOSP, 0], my_points[:-num_OOSP, 1], marker='o', s=50, color='white', edgecolors="black")
-                plt.scatter(my_points[-num_OOSP:, 0], my_points[-num_OOSP:, 1], marker='*', s=90, color='black', edgecolors="black")
+                plt.scatter(my_points[:-num_OOSP, 0], my_points[:-num_OOSP, 1], marker='o', s=50, color='white', label='sample', edgecolors="black")
+                plt.scatter(my_points[-num_OOSP:, 0], my_points[-num_OOSP:, 1], marker='*', s=90, color='black', label='OOSP', edgecolors="black")
 
             if annotate:
                 for index, label in enumerate(range(1, len(my_points) + 1)):
@@ -1206,6 +1205,7 @@ class RigidTransformation:
             plt.title(title)
             plt.xlabel(Ax)
             plt.ylabel(Ay)
+            plt.legend(loc="best", fontsize=12)
 
             if save:
                 plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
@@ -1534,9 +1534,9 @@ class RigidTransf_NPlus(RigidTransformation):
         # Make plot
         fig, ax = plt.subplots()
         ax.scatter(self.stable_coords_alldata[:sample_added - self.num_OOSP, 0], self.stable_coords_alldata[:sample_added - self.num_OOSP, 1],
-                   marker='o', s=50, color='white', edgecolors="black")
+                    marker='o', label='sample', s=50, color='white', edgecolors="black")
         ax.scatter(self.stable_coords_alldata[(sample_added - self.num_OOSP):, 0], self.stable_coords_alldata[(sample_added - self.num_OOSP):, 1],
-                   marker='*', color='k', s=90)
+                   marker='*', label='OOSP', color='k', s=90)
 
         if annotate:
             for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
@@ -1548,6 +1548,7 @@ class RigidTransf_NPlus(RigidTransformation):
         ax.set_title(title)
         ax.set_xlabel(Ax)
         ax.set_ylabel(Ay)
+        plt.legend(loc="best", fontsize=12)
 
         if save:
             plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
@@ -1572,41 +1573,46 @@ class RigidTransf_NPlus(RigidTransformation):
             scatter_colors = sns.color_palette(cmap)
 
         if n_case:
-            plt.scatter(self.stable_coords_alldata[:, 0],
-                        self.stable_coords_alldata[:, 1],
-                        marker='o',
-                        s=50, linewidths=0.5,
-                        c=scatter_colors,
-                        edgecolors="black")
-
-            if annotate:
-                for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
-                                       self.stable_coords_alldata[:, 0] + self.x_off,
-                                       self.stable_coords_alldata[:, 1] + self.y_off):
-                    plt.annotate(label, (x, y), size=8, style='italic')
-
-            # Aesthetics
-            plt.title(self.title)
-            plt.xlabel(self.Ax)
-            plt.ylabel(self.Ay)
-            plt.legend()
-
-        else:
-            plt.scatter(self.stable_coords_alldata[:self.num_OOSP, 0],
-                        self.stable_coords_alldata[:self.num_OOSP, 1],
-                        marker='o',
-                        s=50, linewidths=0.5,
-                        c=scatter_colors[:self.num_OOSP],
-                        edgecolors="black")
-
             plt.scatter(self.stable_coords_alldata[self.num_OOSP:, 0],
                         self.stable_coords_alldata[self.num_OOSP:, 1],
-                        marker='*',
-                        s=200, linewidths=0.5,
+                        marker='o',
+                        s=50, linewidths=0.5,
                         c=scatter_colors[self.num_OOSP:],
                         edgecolors="black")
 
             if annotate:
+                for label, x, y in zip(range(1, len(self.stable_coords_alldata[self.num_OOSP:, 0]) + 1),
+                                       self.stable_coords_alldata[self.num_OOSP:, 0] + self.x_off,
+                                       self.stable_coords_alldata[self.num_OOSP:, 1] + self.y_off):
+                    plt.annotate(label, (x, y), size=8, style='italic')
+
+            # Aesthetics
+            plt.title(self.title)
+            plt.xlabel(self.Ax)
+            plt.ylabel(self.Ay)
+            plt.legend(loc="best", fontsize=14)
+
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
+
+            if save:
+                plt.savefig(self.title + '.tiff', dpi=300, bbox_inches='tight')
+
+        else:
+            plt.scatter(self.stable_coords_alldata[self.num_OOSP:, 0],
+                        self.stable_coords_alldata[self.num_OOSP:, 1],
+                        marker='o',
+                        s=50, linewidths=0.5,
+                        c=scatter_colors[self.num_OOSP:],
+                        edgecolors="black")
+
+            plt.scatter(self.stable_coords_alldata[:self.num_OOSP, 0],
+                        self.stable_coords_alldata[:self.num_OOSP, 1],
+                        marker='*',
+                        s=200, linewidths=0.5,
+                        c=scatter_colors[:self.num_OOSP],
+                        edgecolors="black")
+
+            if annotate:
                 for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
                                        self.stable_coords_alldata[:, 0] + self.x_off,
                                        self.stable_coords_alldata[:, 1] + self.y_off):
@@ -1616,7 +1622,7 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.title(self.title)
             plt.xlabel(self.Ax)
             plt.ylabel(self.Ay)
-            plt.legend()
+            plt.legend(loc="best", fontsize=14)
 
         plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
