@@ -1561,6 +1561,8 @@ class RigidTransf_NPlus(RigidTransformation):
 
     def maybe(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
 
+        # Create an empty list to store the handles for the legend
+        handles = []
         if hue_ is not None:
             cmap = "rocket_r" if palette_ == 1 else "bright"
             categories = dataframe[hue_].unique()
@@ -1571,9 +1573,7 @@ class RigidTransf_NPlus(RigidTransformation):
 
             scatter_colors = [category_to_color[category] for category in dataframe[hue_]]
 
-            # Create an empty list to store the handles for the legend
-            handles = []
-
+            # Make handle for legend
             for category in categories:
                 if category in dataframe[hue_]:
                     scatter_color = category_to_color[category]
