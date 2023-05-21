@@ -1135,7 +1135,7 @@ class RigidTransformation:
 
 
     @staticmethod
-    def convex_hull(array, num_OOSP, title, x_off, y_off, Ax, Ay, expectation_compute=True, make_figure=True, n_case=True,
+    def convex_hull(array, title, x_off, y_off, Ax, Ay, num_OOSP=None, expectation_compute=True, make_figure=True, n_case=True,
                     annotate=True, save=True):
         """
         Computes the convex hull of the given array of points and visualizes it.
@@ -1185,7 +1185,7 @@ class RigidTransformation:
 
         #  Make plot
         if make_figure:
-            if n_case:
+            if n_case or num_OOSP is None:
                 #  For N-sample case
                 plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='white', label='sample', edgecolors="black")
             else:
@@ -1497,7 +1497,7 @@ class RigidTransf_NPlus(RigidTransformation):
         plt.show()
 
 
-    def stable_representation(self, title, Ax, Ay, x_off, y_off, sample_added, annotate=True, save=True):
+    def stable_representation(self, title, Ax, Ay, x_off, y_off, annotate=True, save=True):
         """
         Visualizes the n+1 case for all samples with a stabilized representation obtained in the n-case.
         The visualization seen is invariant to rotation, translation, and reflection transformations.
@@ -1514,8 +1514,6 @@ class RigidTransf_NPlus(RigidTransformation):
             The offset value to adjust the x-coordinate of the annotations.
         y_off : float
             The offset value to adjust the y-coordinate of the annotations.
-        sample_added : int
-            The number of samples added in the n+1 case.
         annotate : bool, optional
             Indicates whether to annotate the data points. Defaults to True.
         save : bool, optional
@@ -1535,9 +1533,9 @@ class RigidTransf_NPlus(RigidTransformation):
 
         # Make plot
         fig, ax = plt.subplots()
-        ax.scatter(self.stable_coords_alldata[:sample_added - self.num_OOSP, 0], self.stable_coords_alldata[:sample_added - self.num_OOSP, 1],
+        ax.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0], self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
                     marker='o', label='sample', s=50, color='white', edgecolors="black")
-        ax.scatter(self.stable_coords_alldata[(sample_added - self.num_OOSP):, 0], self.stable_coords_alldata[(sample_added - self.num_OOSP):, 1],
+        ax.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0], self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
                    marker='*', label='OOSP', color='k', s=90)
 
         if annotate:
@@ -1561,8 +1559,6 @@ class RigidTransf_NPlus(RigidTransformation):
 
     def maybe(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
 
-        # Create an empty list to store the handles for the legend
-        handles = []
         if hue_ is not None:
             cmap = "rocket_r" if palette_ == 1 else "bright"
             categories = dataframe[hue_].unique()
@@ -1573,26 +1569,22 @@ class RigidTransf_NPlus(RigidTransformation):
 
             scatter_colors = [category_to_color[category] for category in dataframe[hue_]]
 
-            # Make handle for legend
-            for category in categories:
-                if category in dataframe[hue_]:
-                    scatter_color = category_to_color[category]
-                    handle = plt.scatter([], [], color=scatter_color, marker='o', label=category)  #
-                    handles.append(handle)
-
+            # Create handles for legend
+            handles = [plt.scatter([], [], color=category_to_color[category], marker='o', label=category)
+                       for category in categories]
 
         if n_case:
-            plt.scatter(self.stable_coords_alldata[self.num_OOSP:, 0],
-                        self.stable_coords_alldata[self.num_OOSP:, 1],
+            plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
+                        self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
                         marker='o',
                         s=50, linewidths=0.5,
-                        c=scatter_colors[self.num_OOSP:],
+                        c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
                         edgecolors="black")
 
             if annotate:
-                for label, x, y in zip(range(1, len(self.stable_coords_alldata[self.num_OOSP:, 0]) + 1),
-                                       self.stable_coords_alldata[self.num_OOSP:, 0] + self.x_off,
-                                       self.stable_coords_alldata[self.num_OOSP:, 1] + self.y_off):
+                for label, x, y in zip(range(1, len(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0]) + 1),
+                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0] + self.x_off,
+                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1] + self.y_off):
                     plt.annotate(label, (x, y), size=8, style='italic')
 
             # Aesthetics
@@ -1601,18 +1593,18 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.ylabel(self.Ay)
 
         else:
-            plt.scatter(self.stable_coords_alldata[self.num_OOSP:, 0],
-                        self.stable_coords_alldata[self.num_OOSP:, 1],
+            plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
+                        self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
                         marker='o',
                         s=50, linewidths=0.5,
-                        c=scatter_colors[self.num_OOSP:],
+                        c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
                         edgecolors="black")
 
-            plt.scatter(self.stable_coords_alldata[:self.num_OOSP, 0],
-                        self.stable_coords_alldata[:self.num_OOSP, 1],
+            plt.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
+                        self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
                         marker='*',
                         s=200, linewidths=0.5,
-                        c=scatter_colors[:self.num_OOSP],
+                        c=scatter_colors[(len(self.stable_coords_alldata) - self.num_OOSP):],
                         edgecolors="black")
 
             if annotate:
@@ -1627,7 +1619,7 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.ylabel(self.Ay)
 
 
-        plt.legend(handles=handles, loc="best", fontsize=14)
+        plt.legend(handles=handles, loc="best", fontsize=12)
         plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
         if save:
