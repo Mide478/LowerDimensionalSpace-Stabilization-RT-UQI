@@ -75,7 +75,7 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
     # For N_case visuals
     if n_case:
         fig = sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
-                     plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
+                     plot_kws=dict(s=90, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
                      palette=palette_)
 
     else:
@@ -84,7 +84,7 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
 
         # Create pairplot
         fig = sns.pairplot(data=dataframe[:-num_OOSP], vars=feat_title, diag_kws={'edgecolor': 'black'},
-                           plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
+                           plot_kws=dict(s=90, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
                            markers='o', palette=palette_)
 
         # Plot the OOSP's with a stars marker type in all subplots
@@ -106,7 +106,7 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
                             if hue_value in ('low', 'med', 'high', 'vhigh'):
                                 color_index = ['low', 'med', 'high', 'vhigh'].index(hue_value)
                                 color = palette_[color_index]
-                                ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=color,
+                                ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=250, color=color,
                                            edgecolors="black", linewidth=0.5)
 
     plt.rc('legend', fontsize=16, title_fontsize=18)
@@ -1658,7 +1658,7 @@ class RigidTransf_NPlus(RigidTransformation):
         if n_case:
             plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
                         self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
-                        marker='o', label='sample',
+                        marker='o',
                         s=50, linewidths=0.5,
                         c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
                         edgecolors="black")
@@ -1678,14 +1678,14 @@ class RigidTransf_NPlus(RigidTransformation):
         else:
             plt.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
                         self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
-                        marker='o', label='sample',
+                        marker='o',
                         s=50, linewidths=0.5,
                         c=scatter_colors[:len(self.stable_coords_alldata) - self.num_OOSP],
                         edgecolors="black")
 
             plt.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
                         self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
-                        marker='*', label='OOSP',
+                        marker='*',
                         s=200, linewidths=0.5,
                         c=scatter_colors[(len(self.stable_coords_alldata) - self.num_OOSP):],
                         edgecolors="black")
