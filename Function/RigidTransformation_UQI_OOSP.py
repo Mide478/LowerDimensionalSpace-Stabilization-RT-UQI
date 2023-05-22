@@ -3,6 +3,7 @@ import random
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.colors import ListedColormap
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -73,7 +74,7 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
 
     # For N_case visuals
     if n_case:
-        sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
+        fig = sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
                      plot_kws=dict(s=50, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
                      palette=palette_)
 
@@ -95,6 +96,9 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
                         continue
                     ax = fig.axes[i, j]
                     if ax is not None:
+                        ax.set_xlabel(ax.get_xlabel(), fontsize=14)
+                        ax.set_ylabel(ax.get_ylabel(), fontsize=14)
+                        ax.tick_params(axis='both', which='both', labelsize=12)
                         for _, row in last_data.iterrows():
                             last_datapoint = row[[feat2, feat1]].values
                             hue_value = row[hue_]
@@ -105,10 +109,13 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
                                 ax.scatter(last_datapoint[0], last_datapoint[1], marker=last_marker, s=200, color=color,
                                            edgecolors="black", linewidth=0.5)
 
+    plt.rc('legend', fontsize=16, title_fontsize=18)
     plt.subplots_adjust(left=left_adj, bottom=bottom_adj, right=right_adj, top=top_adj, wspace=wspace, hspace=hspace)
 
     if save:
         plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+
+    plt.rcdefaults()
     plt.show()
     return
 
@@ -673,6 +680,7 @@ class RigidTransformation:
         -------
         None
         """
+        plt.rcdefaults()
 
         if self.all_real is None:
             raise TypeError("Run rung_rigid_MDS first.")
@@ -691,10 +699,28 @@ class RigidTransformation:
                     pairplot = sns.scatterplot(x=self.all_real[realization_idx][:, 0],
                                                y=self.all_real[realization_idx][:, 1],
                                                hue=self.df_idx[response], s=60, markers='o', palette=cmap,
-                                               edgecolor="black", ax=ax)
-                    pairplot.set_xlabel(Ax)
-                    pairplot.set_ylabel(Ay)
+                                               edgecolor="black", ax=ax, legend=False)
+                    pairplot.set_xlabel(Ax, fontsize=16)
+                    pairplot.set_ylabel(Ay, fontsize=16)
                     pairplot.set_title(title[i] + str(realization_idx) + " at seed " + str(self.random_seeds[i]))
+
+                    # Make custom colorbar
+                    categories = self.df_idx[response].unique()
+                    num_categories = len(categories)
+                    category_to_color = dict(zip(categories, cmap))
+                    unique_colors = [category_to_color[category] for category in categories]
+                    palette = ListedColormap(unique_colors)
+                    bounds = range(num_categories + 1)
+                    tick_positions = [i + 0.5 for i in bounds[:-1]]
+                    norm = mpl.colors.BoundaryNorm(bounds, palette.N)
+
+                    divider = make_axes_locatable(ax)
+                    cax = divider.append_axes('right', size='5%', pad=0.3)
+                    colorbar = fig.colorbar(plt.cm.ScalarMappable(cmap=palette, norm=norm),
+                                            ticks=tick_positions, cax=cax,
+                                            boundaries=bounds, spacing='proportional')
+                    colorbar.set_ticklabels(categories, fontsize=14)
+                    colorbar.set_label(response, rotation=270, labelpad=30, size=16)
 
                     if annotate:
                         for j, txt in enumerate(self.df_idx[self.idx]):
@@ -710,12 +736,30 @@ class RigidTransformation:
                     pairplot = sns.scatterplot(x=self.calc_real[realization_idx][0],
                                                y=self.calc_real[realization_idx][1],
                                                hue=self.df_idx[response], s=60, markers='o', palette=cmap,
-                                               edgecolor="black", ax=ax)
-                    pairplot.set_xlabel(Ax)
-                    pairplot.set_ylabel(Ay)
+                                               edgecolor="black", ax=ax, legend=False)
+                    pairplot.set_xlabel(Ax, fontsize=16)
+                    pairplot.set_ylabel(Ay, fontsize=16)
                     pairplot.set_title(
-                        "Stabilized solution for " + title[i].lower() + str(realization_idx) + " at seed " +
-                        str(self.random_seeds[i]))
+                        "Stabilized solution for " + title[i].lower() + str(realization_idx) + " \nat seed " +
+                        str(self.random_seeds[i]), fontsize=16)
+
+                    # Make custom colorbar
+                    categories = self.df_idx[response].unique()
+                    num_categories = len(categories)
+                    category_to_color = dict(zip(categories, cmap))
+                    unique_colors = [category_to_color[category] for category in categories]
+                    palette = ListedColormap(unique_colors)
+                    bounds = range(num_categories + 1)
+                    tick_positions = [i + 0.5 for i in bounds[:-1]]
+                    norm = mpl.colors.BoundaryNorm(bounds, palette.N)
+
+                    divider = make_axes_locatable(ax)
+                    cax = divider.append_axes('right', size='5%', pad=0.3)
+                    colorbar = fig.colorbar(plt.cm.ScalarMappable(cmap=palette, norm=norm),
+                                            ticks=tick_positions, cax=cax,
+                                            boundaries=bounds, spacing='proportional')
+                    colorbar.set_ticklabels(categories, fontsize=14)
+                    colorbar.set_label(response, rotation=270, labelpad=30, size=16)
 
                     if annotate:
                         for index_, txt in enumerate(self.df_idx[self.idx]):
@@ -729,10 +773,28 @@ class RigidTransformation:
             ax = axs[subplot_nos - 1]
             pairplot = sns.scatterplot(x=self.all_real[0][:, 0], y=self.all_real[0][:, 1],
                                        hue=self.df_idx[response], s=60, markers='o', palette=cmap,
-                                       edgecolor="black", ax=ax)
-            pairplot.set_xlabel(Ax)
-            pairplot.set_ylabel(Ay)
-            pairplot.set_title(title[0] + str(realization_idx) + " at seed " + str(self.random_seeds[0]))
+                                       edgecolor="black", ax=ax, legend=False)
+            pairplot.set_xlabel(Ax, fontsize=16)
+            pairplot.set_ylabel(Ay, fontsize=16)
+            pairplot.set_title(title[0] + str(realization_idx) + "\n at seed " + str(self.random_seeds[0]), fontsize=16)
+
+            # Make custom colorbar
+            categories = self.df_idx[response].unique()
+            num_categories = len(categories)
+            category_to_color = dict(zip(categories, cmap))
+            unique_colors = [category_to_color[category] for category in categories]
+            palette = ListedColormap(unique_colors)
+            bounds = range(num_categories + 1)
+            tick_positions = [i + 0.5 for i in bounds[:-1]]
+            norm = mpl.colors.BoundaryNorm(bounds, palette.N)
+
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.3)
+            colorbar = fig.colorbar(plt.cm.ScalarMappable(cmap=palette, norm=norm),
+                                    ticks=tick_positions, cax=cax,
+                                    boundaries=bounds, spacing='proportional')
+            colorbar.set_ticklabels(categories, fontsize=14)
+            colorbar.set_label(response, rotation=270, labelpad=30, size=16)
 
             if annotate:
                 for index_, txt in enumerate(self.df_idx[self.idx]):
@@ -742,10 +804,9 @@ class RigidTransformation:
 
         for ax in axs:
             ax.set_aspect('auto')
-            ax.legend(fontsize=11)
             ax.tick_params(axis='both', which='major', labelsize=12)
 
-        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.5, wspace=0.2, hspace=0.2)
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.5, wspace=0.40, hspace=0.25)
 
         if save:
             plt.savefig('Variations with seeds 2x2 for data subset with tracking.tiff', dpi=300, bbox_inches='tight')
@@ -811,8 +872,8 @@ class RigidTransformation:
                 scatterplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, hue=self.df_idx[response], s=60, markers='o',
                                               alpha=0.1, palette=palette_, edgecolor="black", legend=False)
 
-                scatterplot.set_xlabel(Ax)
-                scatterplot.set_ylabel(Ay)
+                scatterplot.set_xlabel(Ax, fontsize=12)
+                scatterplot.set_ylabel(Ay, fontsize=12)
                 scatterplot.set_title(title)
 
         elif plot_type.lower() == 'jitters':
@@ -827,9 +888,9 @@ class RigidTransformation:
                 for index, label in enumerate(range(1, len(mds1_vec) + 1)):
                     plt.annotate(label, (mds1_vec[index] + x_off, mds2_vec[index] + y_off), size=8, style='italic')
 
-            scatterplot.set_xlabel(Ax)
-            scatterplot.set_ylabel(Ay)
-            scatterplot.set_title(title)
+            scatterplot.set_xlabel(Ax, fontsize=14)
+            scatterplot.set_ylabel(Ay, fontsize=14)
+            scatterplot.set_title(title, fontsize=14)
 
         elif plot_type.lower() == 'uncertainty':
             for i, calc_real in enumerate(self.calc_real):
@@ -856,10 +917,10 @@ class RigidTransformation:
                                  style='italic')
 
             #  Aesthetics
-            scatterplot.set_xlabel(Ax)
-            scatterplot.set_ylabel(Ay)
-            scatterplot.set_title(title)
-            plt.legend()
+            scatterplot.set_xlabel(Ax, fontsize=14)
+            scatterplot.set_ylabel(Ay, fontsize=14)
+            scatterplot.set_title(title, fontsize=14)
+            plt.legend(loc="best", fontsize=14)
 
         # Make custom colorbar
         categories = self.df_idx[response].unique()
@@ -872,9 +933,9 @@ class RigidTransformation:
         norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
         colorbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ticks=tick_positions,
                                 boundaries=bounds, spacing='proportional')
-        colorbar.set_ticklabels(categories)
-        colorbar.set_label(response, rotation=270, labelpad=30, size=12)
-        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )  #  right=1.2
+        colorbar.set_ticklabels(categories, fontsize=14)
+        colorbar.set_label(response, rotation=270, labelpad=30, size=14)
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1.2, top=1.3, wspace=0.3, hspace=0.3)
 
         if save:
             plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
@@ -1028,31 +1089,36 @@ class RigidTransformation:
                 for i, txt in enumerate(self.df_idx[self.idx]):
                     scatterplot.annotate(txt, (x[i] + x_off, y[i] + y_off), size=10, style='italic')
 
-            scatterplot.set_xlabel(Ax)
-            scatterplot.set_ylabel(Ay)
-            scatterplot.set_title(title)
-            plt.subplots_adjust(left=0.0, bottom=0.0, right=2.0, top=1., wspace=0.3, hspace=0.3)
+            scatterplot.set_xlabel(Ax, fontsize=16)
+            scatterplot.set_ylabel(Ay, fontsize =16)
+            scatterplot.set_title(title, fontsize=16)
+
+            # Make custom colorbar
+            categories = self.df_idx[response].unique()
+            num_categories = len(categories)
+            category_to_color = dict(zip(categories, cmap))
+            unique_colors = [category_to_color[category] for category in categories]
+            palette = ListedColormap(unique_colors)
+            bounds = range(num_categories + 1)
+            tick_positions = [i + 0.5 for i in bounds[:-1]]
+            norm = mpl.colors.BoundaryNorm(bounds, palette.N)
+
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.3)
+            colorbar = fig.colorbar(plt.cm.ScalarMappable(cmap=palette, norm=norm),
+                                    ticks=tick_positions, cax=cax,
+                                    boundaries=bounds, spacing='proportional')
+            colorbar.set_ticklabels(categories, fontsize=14)
+            colorbar.set_label(response, rotation=270, labelpad=30, size=16)
+
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=2.1, top=1.5, wspace=0.3, hspace=0.3)
 
         plot_scatter(axs[0], self.all_real[r_idx][:, 0], self.all_real[r_idx][:, 1],
                      self.df_idx[response], "Base case realization at seed " + str(self.random_seeds[r_idx]))
 
         plot_scatter(axs[1], self.array_exp[0, :], self.array_exp[1, :],
                      self.df_idx[response],
-                     "Expectation of Stabilized Solutions for " + str(self.num_realizations) + " realizations")
-
-        # Make custom colorbar
-        categories = self.df_idx[response].unique()
-        num_categories = len(categories)
-        category_to_color = dict(zip(categories, cmap))
-        unique_colors = [category_to_color[category] for category in categories]
-        palette = ListedColormap(unique_colors)
-        bounds = range(num_categories + 1)
-        tick_positions = [i + 0.5 for i in bounds[:-1]]
-        norm = mpl.colors.BoundaryNorm(bounds, palette.N)
-        colorbar = plt.colorbar(plt.cm.ScalarMappable(cmap=palette, norm=norm), ticks=tick_positions,
-                                boundaries=bounds, spacing='proportional')
-        colorbar.set_ticklabels(categories)
-        colorbar.set_label(response, rotation=270, labelpad=50, size=12)
+                     "Expectation of Stabilized Solutions for\n " + str(self.num_realizations) + " realizations")
 
         if save:
                 plt.savefig('Stabilized independent result vs expectation of stabilized results.tiff', dpi=300,
@@ -1124,27 +1190,27 @@ class RigidTransformation:
         plt.arrow(0, 0, 200, 200, width=0.02, color='black', head_length=0.0, head_width=0.0)
         plt.xlim(0, 15)
         plt.ylim(0, 15)
-        plt.xlabel("Pairwise Distance: original space")
-        plt.ylabel("Pairwise Distance: projected space")
-        plt.title("Pairwise Distance: Projected to 2 components")
+        plt.xlabel("Pairwise Distance: original space", fontsize=14)
+        plt.ylabel("Pairwise Distance: projected space", fontsize=14)
+        plt.title("Pairwise Distance: Projected to 2 components", fontsize=14)
 
         plt.subplot(222)
         plt.hist(rates, bins=50, range=(0.5, 1.5), color='red', alpha=0.2, edgecolor='k')
-        plt.xlabel("Distance Ratio: projected / original")
-        plt.ylabel("Frequency")
-        plt.title("Pairwise Distance: Projected to 2 Components")
+        plt.xlabel("Distance Ratio: projected / original", fontsize=14)
+        plt.ylabel("Frequency", fontsize=14)
+        plt.title("Pairwise Distance: Projected to 2 Components", fontsize=14)
 
         plt.subplot(223)
         plt.hist(dists, bins=50, range=(0., 15.), color='red', alpha=0.2, edgecolor='k')
-        plt.xlabel("Pairwise Distance")
-        plt.ylabel("Frequency")
-        plt.title("Pairwise Distance: Original Data")
+        plt.xlabel("Pairwise Distance", fontsize=14)
+        plt.ylabel("Frequency", fontsize=14)
+        plt.title("Pairwise Distance: Original Data", fontsize=14)
 
         plt.subplot(224)
         plt.hist(projected_dists, bins=50, range=(0., 15.), color='red', alpha=0.2, edgecolor='k')
-        plt.xlabel("Pairwise Distance")
-        plt.ylabel("Frequency")
-        plt.title("Pairwise Distance: Projected to 2 Components")
+        plt.xlabel("Pairwise Distance", fontsize=14)
+        plt.ylabel("Frequency", fontsize=14)
+        plt.title("Pairwise Distance: Projected to 2 Components", fontsize=14)
 
         plt.subplots_adjust(left=0.0, bottom=0.0, right=1.7, top=2.3, wspace=0.2, hspace=0.3)
 
@@ -1222,9 +1288,9 @@ class RigidTransformation:
                 plt.plot(my_points[simplex, 0], my_points[simplex, 1], 'r--')
                 plt.fill(my_points[hull.vertices, 0], my_points[hull.vertices, 1], c='yellow', alpha=0.01)
 
-            plt.title(title)
-            plt.xlabel(Ax)
-            plt.ylabel(Ay)
+            plt.title(title, fontsize=14)
+            plt.xlabel(Ax, fontsize=14)
+            plt.ylabel(Ay, fontsize=14)
             plt.legend(loc="best", fontsize=12)
 
             plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
@@ -1271,17 +1337,17 @@ class RigidTransformation:
                 ax.fill_between(x, y, alpha=0.5)
 
             #  Aesthetics
-            ax.set_xlabel('Normal scores for ' + feat[3:])
-            ax.set_xticks(ticks=np.arange(-5, 5))
-            ax.set_ylabel("Marginal probability density")
+            ax.set_xlabel('Normal scores for ' + feat[3:], fontsize=16)
+            ax.set_xticks(ticks=np.arange(-5, 5), fontsize=14)
+            ax.set_ylabel("Marginal probability density", fontsize=16)
 
         std_patches = [
             mpatches.Patch(color='sandybrown', label='+/- 1' r'$\sigma$'),
             mpatches.Patch(color='darkseagreen', label='+/- 2' r'$\sigma$'),
             mpatches.Patch(color='indianred', label='+/- 3' r'$\sigma$')
         ]
-        plt.legend(handles=std_patches)
-        plt.subplots_adjust(wspace=0.3)
+        plt.legend(handles=std_patches, fontsize=16)
+        plt.subplots_adjust(wspace=0.27, top=1.5)
 
         if save:
             plt.savefig('Marginal_distributions.tiff', dpi=300, bbox_inches='tight')
@@ -1476,10 +1542,10 @@ class RigidTransf_NPlus(RigidTransformation):
         # Plot anchors from N sample case
         axes[0].scatter(self.anchors1[:, 0], self.anchors1[:, 1], marker='o', s=50, color='blue', edgecolors="black")
         axes[0].set_aspect('auto')
-        axes[0].set_title('Anchors from N sample case', size=14)
-        axes[0].set_xlabel(Ax, size=14)
-        axes[0].set_ylabel(Ay, size=14)
-        axes[0].tick_params(axis='both', which='major', labelsize=12)
+        axes[0].set_title('Anchors from N sample case', size=16)
+        axes[0].set_xlabel(Ax, size=16)
+        axes[0].set_ylabel(Ay, size=16)
+        axes[0].tick_params(axis='both', which='major', labelsize=14)
         if annotate:
             for index, label in enumerate(anchor_labels):
                 axes[0].annotate(label, (self.anchors1[:, 0][index] + x_off, self.anchors1[:, 1][index] + y_off),
@@ -1488,10 +1554,10 @@ class RigidTransf_NPlus(RigidTransformation):
         # Plot anchors from N+1 sample case
         axes[1].scatter(self.anchors2[:, 0], self.anchors2[:, 1], marker='o', s=50, color='blue', edgecolors="black")
         axes[1].set_aspect('auto')
-        axes[1].set_title('Anchors from N+1 sample case', size=14)
-        axes[1].set_xlabel(Ax, size=14)
-        axes[1].set_ylabel(Ay, size=14)
-        axes[1].tick_params(axis='both', which='major', labelsize=12)
+        axes[1].set_title('Anchors from N+1 sample case', size=16)
+        axes[1].set_xlabel(Ax, size=16)
+        axes[1].set_ylabel(Ay, size=16)
+        axes[1].tick_params(axis='both', which='major', labelsize=14)
         if annotate:
             for index, label in enumerate(self.common_vertices2_index):
                 axes[1].annotate(label, (self.anchors2[:, 0][index] + x_off, self.anchors2[:, 1][index] + y_off),
@@ -1501,16 +1567,16 @@ class RigidTransf_NPlus(RigidTransformation):
         axes[2].scatter(self.stable_coords_anchors[:, 0], self.stable_coords_anchors[:, 1], marker='o', s=50,
                         color='blue', edgecolors="black")
         axes[2].set_aspect('auto')
-        axes[2].set_title('Stabilized anchor solution', size=14)
-        axes[2].set_xlabel(Ax, size=14)
-        axes[2].set_ylabel(Ay, size=14)
-        axes[2].tick_params(axis='both', which='major', labelsize=12)
+        axes[2].set_title('Stabilized anchor solution', size=16)
+        axes[2].set_xlabel(Ax, size=16)
+        axes[2].set_ylabel(Ay, size=16)
+        axes[2].tick_params(axis='both', which='major', labelsize=14)
         if annotate:
             for index, label in enumerate(anchor_labels):
                 axes[2].annotate(label, (self.stable_coords_anchors[:, 0][index] + x_off,
                                          self.stable_coords_anchors[:, 1][index] + y_off), size=10, style='italic')
 
-        plt.subplots_adjust(left=0.0, bottom=0.0, right=3., top=1.3, wspace=0.25, hspace=0.3)
+        plt.subplots_adjust(top=1.1, right=2.5, wspace=0.3)
         if save:
             plt.savefig('Anchor sets & Stabilized Anchor set Solution.tiff', dpi=300, bbox_inches='tight')
 
@@ -1565,10 +1631,10 @@ class RigidTransf_NPlus(RigidTransformation):
                 ax.annotate(label, (x, y), size=8, style='italic')
 
         # Aesthetics
-        ax.set_title(title)
-        ax.set_xlabel(Ax)
-        ax.set_ylabel(Ay)
-        plt.legend(loc="best", fontsize=12)
+        ax.set_title(title, fontsize=14)
+        ax.set_xlabel(Ax, fontsize=14)
+        ax.set_ylabel(Ay, fontsize=14)
+        plt.legend(loc="best", fontsize=16)
         plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
         if save:
@@ -1604,9 +1670,9 @@ class RigidTransf_NPlus(RigidTransformation):
                     plt.annotate(label, (x, y), size=8, style='italic')
 
             # Aesthetics
-            plt.title(self.title)
-            plt.xlabel(self.Ax)
-            plt.ylabel(self.Ay)
+            plt.title(self.title, fontsize=14)
+            plt.xlabel(self.Ax, fontsize=14)
+            plt.ylabel(self.Ay, fontsize=14)
 
 
         else:
@@ -1631,9 +1697,9 @@ class RigidTransf_NPlus(RigidTransformation):
                     plt.annotate(label, (x, y), size=8, style='italic')
 
             # Aesthetics
-            plt.title(self.title)
-            plt.xlabel(self.Ax)
-            plt.ylabel(self.Ay)
+            plt.title(self.title, fontsize=16)
+            plt.xlabel(self.Ax, fontsize=16)
+            plt.ylabel(self.Ay, fontsize=16)
 
         # Add custom colorbar
         if hue_ is not None:
@@ -1644,11 +1710,11 @@ class RigidTransf_NPlus(RigidTransformation):
             norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
             colorbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ticks=tick_positions,
                                     boundaries=bounds, spacing='proportional')
-            colorbar.set_ticklabels(categories)
-            colorbar.set_label(hue_, rotation=270, labelpad=30, size=12)
+            colorbar.set_ticklabels(categories, fontsize=14)
+            colorbar.set_label(hue_, rotation=270, labelpad=30, size=16)
 
-        plt.legend(loc="best", fontsize=12)
-        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
+        plt.legend(loc="best", fontsize=16)
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1.2, top=1.3, wspace=0.15, hspace=0.3, )
 
         if save:
             plt.savefig(self.title + '.tiff', dpi=300, bbox_inches='tight')
