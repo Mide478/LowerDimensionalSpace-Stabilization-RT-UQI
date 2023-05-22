@@ -865,7 +865,6 @@ class RigidTransformation:
         categories = self.df_idx[response].unique()
         num_categories = len(categories)
         category_to_color = dict(zip(categories, palette_))
-
         unique_colors = [category_to_color[category] for category in categories]
         cmap = ListedColormap(unique_colors)
         bounds = range(num_categories + 1)
@@ -1019,10 +1018,11 @@ class RigidTransformation:
         if self.array_exp is None:
             raise TypeError("Run expectation first.")
 
-        fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+        fig, axs = plt.subplots(1, 2)
 
         def plot_scatter(ax, x, y, hue, title):
-            scatterplot = sns.scatterplot(x=x, y=y, hue=hue, s=60, markers='o', palette=cmap, edgecolor="black", ax=ax)
+            scatterplot = sns.scatterplot(x=x, y=y, hue=hue, s=60, markers='o', palette=cmap, edgecolor="black",
+                                          legend=False, ax=ax)
 
             if annotate:
                 for i, txt in enumerate(self.df_idx[self.idx]):
@@ -1031,18 +1031,32 @@ class RigidTransformation:
             scatterplot.set_xlabel(Ax)
             scatterplot.set_ylabel(Ay)
             scatterplot.set_title(title)
-            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1., wspace=0.2, hspace=0.3, )
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=2.0, top=1., wspace=0.3, hspace=0.3)
 
         plot_scatter(axs[0], self.all_real[r_idx][:, 0], self.all_real[r_idx][:, 1],
                      self.df_idx[response], "Base case realization at seed " + str(self.random_seeds[r_idx]))
 
         plot_scatter(axs[1], self.array_exp[0, :], self.array_exp[1, :],
                      self.df_idx[response],
-                     "Expectation of Stabilized Solutions over " + str(self.num_realizations) + " realizations")
+                     "Expectation of Stabilized Solutions for " + str(self.num_realizations) + " realizations")
+
+        # Make custom colorbar
+        categories = self.df_idx[response].unique()
+        num_categories = len(categories)
+        category_to_color = dict(zip(categories, cmap))
+        unique_colors = [category_to_color[category] for category in categories]
+        palette = ListedColormap(unique_colors)
+        bounds = range(num_categories + 1)
+        tick_positions = [i + 0.5 for i in bounds[:-1]]
+        norm = mpl.colors.BoundaryNorm(bounds, palette.N)
+        colorbar = plt.colorbar(plt.cm.ScalarMappable(cmap=palette, norm=norm), ticks=tick_positions,
+                                boundaries=bounds, spacing='proportional')
+        colorbar.set_ticklabels(categories)
+        colorbar.set_label(response, rotation=270, labelpad=50, size=12)
 
         if save:
-            plt.savefig('Stabilized independent result vs expectation of stabilized results.tiff', dpi=300,
-                        bbox_inches='tight')
+                plt.savefig('Stabilized independent result vs expectation of stabilized results.tiff', dpi=300,
+                            bbox_inches='tight')
         plt.show()
 
 
