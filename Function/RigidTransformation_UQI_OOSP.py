@@ -788,6 +788,9 @@ class RigidTransformation:
         if self.all_real is None:
             raise TypeError("Run run_rigid_MDS first.")
 
+        if plot_type.lower() not in ['variation', 'jitters', 'uncertainty']:
+            raise ValueError("Use a plot_type of `variation`, `jitters`, or `uncertainty`")
+
         mds1_vec = None
         mds2_vec = None
         df = self.df.copy(deep=True)
@@ -811,10 +814,6 @@ class RigidTransformation:
                 scatterplot.set_xlabel(Ax)
                 scatterplot.set_ylabel(Ay)
                 scatterplot.set_title(title)
-                plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
-
-                if save:
-                    plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
 
         elif plot_type.lower() == 'jitters':
             for i, calc_real in enumerate(self.calc_real):
@@ -831,10 +830,6 @@ class RigidTransformation:
             scatterplot.set_xlabel(Ax)
             scatterplot.set_ylabel(Ay)
             scatterplot.set_title(title)
-            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
-
-            if save:
-                plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
 
         elif plot_type.lower() == 'uncertainty':
             for i, calc_real in enumerate(self.calc_real):
@@ -843,7 +838,7 @@ class RigidTransformation:
                 if i == 0:
                     scatterplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=60, markers='o', alpha=0.3,
                                                   edgecolor="black", linewidths=2, palette=palette_,
-                                                  hue=self.df_idx[response])
+                                                  hue=self.df_idx[response], legend=False)
                 else:
                     scatterplot = sns.scatterplot(x=mds1_vec, y=mds2_vec, s=60, markers='o', palette=palette_,
                                                   alpha=0.1,
@@ -864,17 +859,27 @@ class RigidTransformation:
             scatterplot.set_xlabel(Ax)
             scatterplot.set_ylabel(Ay)
             scatterplot.set_title(title)
-            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
             plt.legend()
 
-            if save:
-                plt.savefig('2D registration jitters uncertainty w.r.t expectation for all realizations.tiff',
-                            dpi=300, bbox_inches='tight')
+        # Make custom colorbar
+        categories = self.df_idx[response].unique()
+        num_categories = len(categories)
+        category_to_color = dict(zip(categories, palette_))
 
-            plt.show()
+        unique_colors = [category_to_color[category] for category in categories]
+        cmap = ListedColormap(unique_colors)
+        bounds = range(num_categories + 1)
+        tick_positions = [i + 0.5 for i in bounds[:-1]]
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        colorbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ticks=tick_positions,
+                                boundaries=bounds, spacing='proportional')
+        colorbar.set_ticklabels(categories)
+        colorbar.set_label(response, rotation=270, labelpad=30, size=12)
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )  #  right=1.2
 
-        else:
-            print("Use a plot_type of `variation`, `jitters`, or `uncertainty`")
+        if save:
+            plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
+        plt.show()
 
 
     def expectation(self, r_idx, Ax, Ay, verbose=False):
@@ -1327,7 +1332,7 @@ class RigidTransf_NPlus(RigidTransformation):
 
         Raises
         ------
-        TypeError: If dim_projection is not '2D' or '3D'.
+        ValueError: If dim_projection is not '2D' or '3D'.
         """
 
         # Obtain the anchor points for n and n+1 scenarios
@@ -1349,7 +1354,7 @@ class RigidTransf_NPlus(RigidTransformation):
             anchors1 = np.column_stack((case1_anchors[:, :2], np.zeros(len(case1_anchors))))
             anchors2 = np.column_stack((case2_anchors[:, :2], np.zeros(len(case2_anchors))))
         else:
-            raise TypeError("Use an LDS projection of '2D' or '3D' as dim_projection variable input in class.")
+            raise ValueError("Use an LDS projection of '2D' or '3D' as dim_projection variable input in class.")
 
         # Recover the rotation and translation matrices R,t, respectively for the stable anchor points in n+1 to
         # match anchors in the n-case scenario
@@ -1565,7 +1570,7 @@ class RigidTransf_NPlus(RigidTransformation):
             num_categories = len(categories)
 
             # Define the color palette
-            palette = sns.color_palette(cmap, n_colors=num_categories)
+            palette = sns.color_palette(cmap, n_colors=num_categories + 1)
             category_to_color = dict(zip(categories, palette))
 
             scatter_colors = [category_to_color[category] for category in dataframe[hue_]]
