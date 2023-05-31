@@ -144,7 +144,8 @@ if __name__ == '__main__':
     for index_, n in enumerate(N_VALUES):
         print(f"Processing N = {n}...")
         try:
-            oosp_seed, mds_seed, ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2 = autoresampling(dataframe=df, N=n, args=args_)
+            oosp_seed, mds_seed, ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2 = autoresampling(dataframe=df, N=n,
+                                                                                               args=args_)
             RandomSeed_oosp[index_] = oosp_seed
             RandomSeed_mds[index_] = mds_seed
             NormStress1[index_] = ns1
