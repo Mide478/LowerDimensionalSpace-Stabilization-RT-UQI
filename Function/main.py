@@ -4,7 +4,7 @@ import warnings
 import numpy as np  # ndarray for gridded data
 import pandas as pd  # DataFrames for tabular data
 
-# import joypy
+# import utility function
 import RigidTransformation_UQI_OOSP as RT  # imports script consisting of functions to run workflow
 
 warnings.filterwarnings('ignore')
