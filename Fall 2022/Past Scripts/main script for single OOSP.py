@@ -5,7 +5,7 @@ import numpy as np  # ndarray for gridded data
 import pandas as pd  # DataFrames for tabular data
 
 # import joypy
-import RigidTransformation_UQI_OOSP as RT  # imports script consisting of functions to run workflow
+import RigidTransformation_UQI as RT  # imports script consisting of functions to run workflow
 
 warnings.filterwarnings('ignore')
 
@@ -41,9 +41,8 @@ def get_args_parser():
     parser.add_argument('-dm', '--dissimilarity_metric', default='euclidean', type=str,
                         help="""Dissimilarity metric type """)
     parser.add_argument('--dim_projection', default='2D', type=str, help="""Dimensionality of LDS""")
-    parser.add_argument('--num_OOSP', default=1, type=int, help="""Number of OOSP to add""")
-    parser.add_argument('--make_figure', default=False, type=bool, help="""Toggle for convex hull figure""")
     parser.add_argument('--normalize_projections', default=False, type=bool, help="""Ensures scale is homogeneous""")
+    parser.add_argument('--make_figure', default=False, type=bool, help="""Toggle for convex hull figure""")
     return parser
 
 
@@ -54,8 +53,7 @@ def autoresampling(dataframe, N, args):
     # Add category for response variable i.e., production levels for complete dataset
     df_temp = RT.make_levels(data=dataframe, cat_response=args.cat_response, num_response=args.num_response)
     df_subset1 = df_temp.iloc[:N, 1:-1]  # dataframe for n case
-    df_subset2, random_seed_oosp = RT.make_sample_within_ci(df_subset1.copy(),
-                                                            num_OOSP=args.num_OOSP)  # dataframe for n+1 case
+    df_subset2, random_seed_used = RT.make_sample_within_ci(df_subset1.copy())  # dataframe for n+1 case
     df_subset2.insert(
         0, args.idx, np.arange(1, len(df_subset2) + 1)
     )  # Insert well column index back into data frame for N+1 case
@@ -69,59 +67,52 @@ def autoresampling(dataframe, N, args):
     ######################
     # N case
     #####################
-    obj1 = RT.RigidTransformation(df=df_subset1, features=args.features, num_OOSP=args.num_OOSP, idx=args.idx,
+    obj1 = RT.RigidTransformation(df=df_subset1, features=args.features, idx=args.idx,
                                   num_realizations=args.num_realizations, base_seed=args.base_seed,
                                   start_seed=args.start_seed, stop_seed=args.stop_seed,
                                   dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection)
 
     # Run rigid MDS
-    random_seeds, all_real, calc_real, all_rmse, norm_stress = obj1.run_rigid_MDS(
-        normalize_projections=args.normalize_projections)
+    random_seeds, all_real, calc_real, all_rmse, norm_stress = obj1.run_rigid_MDS(normalize_projections=args.normalize_projections)
     E1 = obj1.expectation(r_idx=args.bc_idx, Ax=Ax1, Ay=Ay1, verbose=False)
 
     my_points, hull, vertices = obj1.convex_hull(
-        array=all_real, num_OOSP=None, title='N sample case', x_off=0.025, y_off=0.03, Ax=Ax1, Ay=Ay1,
-        make_figure=args.make_figure,
+        array=all_real, title='N sample case', x_off=0.025, y_off=0.03, Ax=Ax1, Ay=Ay1, make_figure=args.make_figure,
         expectation_compute=False, save=False)
 
     ######################
     # N + 1 case
     #####################
-    obj2 = RT.RigidTransf_NPlus(df=df_subset2, features=args.features, num_OOSP=args.num_OOSP, idx=args.idx,
+    obj2 = RT.RigidTransf_NPlus(df=df_subset2, features=args.features, idx=args.idx,
                                 num_realizations=args.num_realizations,
                                 base_seed=args.base_seed, start_seed=args.start_seed, stop_seed=args.stop_seed,
                                 dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection)
 
     # Run rigid MDS
-    random_seeds2, all_real2, calc_real2, all_rmse2, norm_stress2 = obj2.run_rigid_MDS(
-        normalize_projections=args.normalize_projections)  # NEED
+    random_seeds2, all_real2, calc_real2, all_rmse2, norm_stress2 = obj2.run_rigid_MDS(normalize_projections=args.normalize_projections)  # NEED
     # Find convex hull polygon
-    my_points2, hull2, vertices2 = obj2.convex_hull(array=all_real2, num_OOSP=args.num_OOSP, title='N+1 sample case',
-                                                    x_off=0.025, y_off=0.03,
+    my_points2, hull2, vertices2 = obj2.convex_hull(array=all_real2, title='N+1 sample case', x_off=0.025, y_off=0.03,
                                                     Ax=Ax1, Ay=Ay1, expectation_compute=False, n_case=False,
                                                     save=False, make_figure=args.make_figure)  # 0.05,0.015
 
     _, _, _, _, rmse_err_anchors, _, _, rmse_err_all = obj2.stabilize_anchors(
-        array1=my_points, array2=my_points2, hull_1=hull, hull_2=hull2,
-        normalize_projections=args.normalize_projections)  # NEED
+        array1=my_points, array2=my_points2, hull_1=hull, hull_2=hull2, normalize_projections=args.normalize_projections)  # NEED
 
     ######################
     # Section 3
     #####################
     E2 = obj2.expectation(r_idx=args.bc_idx, Ax=Ax1, Ay=Ay1, verbose=False)
     my_points_expected, hull_expected, vertices_expected = obj2.convex_hull(
-        array=E2, num_OOSP=args.num_OOSP, title='Expectation of N+1 sample case', x_off=x_off1, y_off=y_off1, Ax=Ax1,
-        Ay=Ay1,
+        array=E2, title='Expectation of N+1 sample case', x_off=x_off1, y_off=y_off1, Ax=Ax1, Ay=Ay1,
         expectation_compute=True, n_case=False, save=False, make_figure=args.make_figure
     )
 
     _, _, _, _, rmse_err_anchors_exp, _, _, rmse_err_all_exp = obj2.stabilize_anchors(
         array1=my_points, array2=my_points_expected, hull_1=hull, hull_2=hull_expected)
 
-    return np.array(list(random_seed_oosp)), np.array(list(random_seeds)), np.array(norm_stress),\
-           np.array(norm_stress2), np.array(all_rmse), np.array(all_rmse2), np.array(rmse_err_anchors), \
-           np.array(rmse_err_anchors_exp)
-
+    return np.array(random_seed_used), np.array(norm_stress), np.array(norm_stress2), np.array(all_rmse),\
+           np.array(all_rmse2), np.array(rmse_err_anchors), np.array(rmse_err_anchors_exp), np.array(rmse_err_all), \
+           np.array(rmse_err_all_exp)
 
 
 if __name__ == '__main__':
@@ -131,21 +122,19 @@ if __name__ == '__main__':
     N_VALUES = range(args_.N_start, args_.N_end, args_.N_step)
 
     # instantiate arrays of zeros
-    RandomSeed_oosp = np.zeros((len(N_VALUES), args_.num_OOSP))
-    RandomSeed_mds = np.zeros((len(N_VALUES), args_.num_realizations))
+    RandomSeed = np.zeros(len(N_VALUES))
     NormStress1 = np.zeros((len(N_VALUES), args_.num_realizations))
     NormStress2 = np.zeros((len(N_VALUES), args_.num_realizations))
-    AllRmse1 = np.zeros((len(N_VALUES), args_.num_realizations - 1))
-    AllRmse2 = np.zeros((len(N_VALUES), args_.num_realizations - 1))
+    AllRmse1 = np.zeros((len(N_VALUES), args_.num_realizations-1))
+    AllRmse2 = np.zeros((len(N_VALUES), args_.num_realizations-1))
     RmseAnchors = np.zeros(len(N_VALUES))
     RmseAnchorsExp = np.zeros(len(N_VALUES))
 
-    for index_, n in enumerate(N_VALUES):
-        print(f"Processing N = {n}...")
+    for index_, N in enumerate(N_VALUES):
+        print(f"Processing N = {N}...")
         try:
-            oosp_seed, mds_seed, ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2= autoresampling(dataframe=df, N=n, args=args_) #, rmse_all1, rmse_all2
-            RandomSeed_oosp[index_] = oosp_seed
-            RandomSeed_mds[index_] = mds_seed
+            seed, ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2, rmse_all1, rmse_all2 = autoresampling(df, N, args_)
+            RandomSeed[index_] = seed
             NormStress1[index_] = ns1
             NormStress2[index_] = ns2
             AllRmse1[index_] = rmse1
@@ -153,15 +142,16 @@ if __name__ == '__main__':
             RmseAnchors[index_] = rmse_err1
             RmseAnchorsExp[index_] = rmse_err2
         except Exception as e:
-            print(f"Error occurred at N = {n}: {e}")
+            print(f"Error occurred at N = {N}: {e}")
             break  # stop the loop if an error occurs
 
     # Save the lists of arrays to NPY files for 100 realizations at each N-value specified
-    np.save('RandomSeed_OOSP.npy', RandomSeed_oosp)  # Random Seed array for OOSP's generated
-    np.save('RandomSeed_MDS.npy', RandomSeed_mds)  # Random Seed array for MDS
+    np.save('RandomSeed_AllReal.npy', RandomSeed)  # Random Seed array used to generate OOSP for each N-case [4, 100, 1]
     np.save('NormStress1_AllReal.npy', NormStress1)  # Normalized kruskal stress1 for N-sample case
     np.save('NormStress2_AllReal.npy', NormStress2)  # Normalized kruskal stress1 for N+1 sample case
-    np.save('AllRmse1_AllReal.npy', AllRmse1)  # RMSE for N-sample case
-    np.save('AllRmse2_AllReal.npy', AllRmse2)  # RMSE for N+1 sample case
+    np.save('AllRmse1_AllReal.npy', AllRmse1)  #  RMSE for N-sample case
+    np.save('AllRmse2_AllReal.npy', AllRmse2)  #  RMSE for N+1 sample case
     np.save('RmseAnchors_AllReal.npy', RmseAnchors)  # RMSE for N-sample case anchors
     np.save('RmseAnchorsExp_AllReal.npy', RmseAnchorsExp)  # RMSE for expectation N+1 case anchors
+
+

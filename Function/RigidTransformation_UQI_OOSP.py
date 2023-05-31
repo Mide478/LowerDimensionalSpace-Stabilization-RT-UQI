@@ -14,9 +14,8 @@ from scipy.spatial import distance
 from scipy.stats import norm
 from shapely.geometry import Polygon
 from sklearn.manifold import MDS  # multidimensional scaling
-from sklearn.metrics.pairwise import euclidean_distances, manhattan_distances, pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances  # euclidean_distances, manhattan_distances,
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-
 
 # TURN OFF ALL GRIDS either via sns or plt.
 # noinspection PyTypeChecker
@@ -75,8 +74,8 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
     # For N_case visuals
     if n_case:
         fig = sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
-                     plot_kws=dict(s=90, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
-                     palette=palette_)
+                           plot_kws=dict(s=90, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
+                           palette=palette_)
 
     else:
         # Define marker type for last datapoint i.e., the additional sample in N+1 case
@@ -148,6 +147,7 @@ def make_levels(data, cat_response, num_response):
     return data
 
 
+# noinspection PyTypeChecker
 def standardizer(dataset, features, keep_only_std_features=False):
     """
     Standardizes the selected features of a dataframe to have a mean of 0 and variance of 1.
@@ -189,6 +189,7 @@ def standardizer(dataset, features, keep_only_std_features=False):
     return df
 
 
+# noinspection PyTypeChecker
 def normalizer(array):
     """
     Normalizes the values of an array to a specified range.
@@ -351,6 +352,7 @@ def rigid_transform_3D(A, B, verbose=False):
     return R, t
 
 
+# noinspection PyTypeChecker,PyUnboundLocalVariable
 def is_convex_polygon(polygon):
     """
     Checks if the polygon defined by the sequence of 2D points is a strictly convex polygon.
@@ -496,9 +498,10 @@ def make_sample_within_ci(dataframe, num_OOSP):
     return data, random_seeds
 
 
+# noinspection PyUnboundLocalVariable
 class RigidTransformation:
-    def __init__(self, df, features, idx, num_OOSP, num_realizations, base_seed, start_seed, stop_seed, dissimilarity_metric,
-                 dim_projection):
+    def __init__(self, df, features, idx, num_OOSP, num_realizations, base_seed, start_seed, stop_seed,
+                 dissimilarity_metric, dim_projection):
         """
         Initializes the RigidTransformation class.
 
@@ -544,7 +547,6 @@ class RigidTransformation:
         self.all_rmse = None
         self.norm_stress = None
         self.array_exp = None
-
 
     def run_rigid_MDS(self, normalize_projections=True):
         """
@@ -646,7 +648,7 @@ class RigidTransformation:
         self.norm_stress = norm_stress
         return random_seeds, all_real, calc_real, all_rmse, norm_stress
 
-
+    # noinspection PyTypeChecker,PyShadowingNames
     def real_plotter(self, response, r_idx, Ax, Ay, title, x_off, y_off, cmap, array2=None, annotate=True, save=True):
         """
         Plots the realizations.
@@ -813,7 +815,6 @@ class RigidTransformation:
 
         plt.show()
 
-
     def bivariate_plotter(self, palette_, response, x_off, y_off, title, plot_type, Ax, Ay, annotate=True, save=True):
         """
         Plots bivariate scatter plots based on the specified plot type.
@@ -941,7 +942,6 @@ class RigidTransformation:
             plt.savefig(title + '.tiff', dpi=300, bbox_inches='tight')
         plt.show()
 
-
     def expectation(self, r_idx, Ax, Ay, verbose=False):
         """
         Calculates the expectation of all the calc_real.
@@ -985,7 +985,6 @@ class RigidTransformation:
         #  Update
         self.array_exp = E
         return E
-
 
     def expect_plotter(self, r_idx, Lx, Ly, xmin, xmax, ymin, ymax, save=True):
         """
@@ -1043,7 +1042,6 @@ class RigidTransformation:
                         dpi=300, bbox_inches='tight')
         plt.show()
 
-
     def compare_plot(self, response, r_idx, Ax, Ay, x_off, y_off, cmap, annotate=True, save=True):
         """
         Plots a comparison between the base case realization and the ensemble expectation of stabilized solutions.
@@ -1090,7 +1088,7 @@ class RigidTransformation:
                     scatterplot.annotate(txt, (x[i] + x_off, y[i] + y_off), size=10, style='italic')
 
             scatterplot.set_xlabel(Ax, fontsize=16)
-            scatterplot.set_ylabel(Ay, fontsize =16)
+            scatterplot.set_ylabel(Ay, fontsize=16)
             scatterplot.set_title(title, fontsize=16)
 
             # Make custom colorbar
@@ -1111,7 +1109,7 @@ class RigidTransformation:
             colorbar.set_ticklabels(categories, fontsize=14)
             colorbar.set_label(response, rotation=270, labelpad=30, size=16)
 
-            plt.subplots_adjust(left=0.0, bottom=0.0, right=2.1, top=1.5, wspace=0.3, hspace=0.3)
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=2.1, top=1.5, wspace=0.4, hspace=0.3)
 
         plot_scatter(axs[0], self.all_real[r_idx][:, 0], self.all_real[r_idx][:, 1],
                      self.df_idx[response], "Base case realization at seed " + str(self.random_seeds[r_idx]))
@@ -1121,10 +1119,9 @@ class RigidTransformation:
                      "Expectation of Stabilized Solutions for\n " + str(self.num_realizations) + " realizations")
 
         if save:
-                plt.savefig('Stabilized independent result vs expectation of stabilized results.tiff', dpi=300,
-                            bbox_inches='tight')
+            plt.savefig('Stabilized independent result vs expectation of stabilized results.tiff', dpi=300,
+                        bbox_inches='tight')
         plt.show()
-
 
     def visual_model_check(self, norm_type, fig_name, array, expectation_compute=True, save=True):
         """
@@ -1219,9 +1216,10 @@ class RigidTransformation:
         plt.show()
         print(f"Distance Ratio, mean: {mean_rate:.4f}, standard deviation: {std_rate:.4f}.")
 
-
+    # noinspection PyTypeChecker
     @staticmethod
-    def convex_hull(array, title, x_off, y_off, Ax, Ay, num_OOSP=None, expectation_compute=True, make_figure=True, n_case=True,
+    def convex_hull(array, title, x_off, y_off, Ax, Ay, num_OOSP=None, expectation_compute=True, make_figure=True,
+                    n_case=True,
                     annotate=True, save=True):
         """
         Computes the convex hull of the given array of points and visualizes it.
@@ -1273,11 +1271,14 @@ class RigidTransformation:
         if make_figure:
             if n_case or num_OOSP is None:
                 #  For N-sample case
-                plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='white', label='sample', edgecolors="black")
+                plt.scatter(my_points[:, 0], my_points[:, 1], marker='o', s=50, color='white', label='sample',
+                            edgecolors="black")
             else:
                 #  For OOSP included case
-                plt.scatter(my_points[:-num_OOSP, 0], my_points[:-num_OOSP, 1], marker='o', s=50, color='white', label='sample', edgecolors="black")
-                plt.scatter(my_points[-num_OOSP:, 0], my_points[-num_OOSP:, 1], marker='*', s=90, color='black', label='OOSP', edgecolors="black")
+                plt.scatter(my_points[:-num_OOSP, 0], my_points[:-num_OOSP, 1], marker='o', s=50, color='white',
+                            label='sample', edgecolors="black")
+                plt.scatter(my_points[-num_OOSP:, 0], my_points[-num_OOSP:, 1], marker='*', s=90, color='black',
+                            label='OOSP', edgecolors="black")
 
             if annotate:
                 for index, label in enumerate(range(1, len(my_points) + 1)):
@@ -1300,7 +1301,6 @@ class RigidTransformation:
 
             plt.show()
         return my_points, hull, vertices
-
 
     def marginal_dbn(self, save=True):
         """
@@ -1356,7 +1356,7 @@ class RigidTransformation:
         return
 
 
-# noinspection PyUnboundLocalVariable
+# noinspection PyUnboundLocalVariable,PyTypeChecker
 class RigidTransf_NPlus(RigidTransformation):
     def __init__(self, df, features, idx, num_OOSP, num_realizations, base_seed, start_seed, stop_seed,
                  dissimilarity_metric, dim_projection):
@@ -1372,7 +1372,6 @@ class RigidTransf_NPlus(RigidTransformation):
         self.stable_coords_alldata = None
         self.common_vertices_index = None
         self.common_vertices2_index = None
-
 
     def stabilize_anchors(self, array1, array2, hull_1, hull_2, normalize_projections=True):
         """
@@ -1471,7 +1470,8 @@ class RigidTransf_NPlus(RigidTransformation):
 
             # # Computationally heavier method, better to use above anchor registration method as proposed. To be used
             # when there is no SVD rigid transformation possible due to deformation of points and OOSP from the tails.
-            # stable_anchors_array = np.column_stack((array2[:len(array2) - self.num_OOSP, 0], array2[:len(array2) - self.num_OOSP, 1]))
+            # stable_anchors_array = np.column_stack((
+            #     array2[:len(array2) - self.num_OOSP, 0], array2[:len(array2) - self.num_OOSP, 1]))
             # R_all, t_all = rigid_transform_2D(np.transpose(stable_anchors_array), np.transpose(array1))
             # new_coords_alldata = (R_all @ np.transpose(array2)) + np.expand_dims(t_all, axis=1)
 
@@ -1487,7 +1487,8 @@ class RigidTransf_NPlus(RigidTransformation):
             # # Computationally heavier method, better to use above anchor registration method as proposed. To be used
             # when there is no SVD rigid transformation possible due to deformation of points and OOSP from the tails
             # stable_anchors_array = np.column_stack(
-            #     (array2[:len(array2) - self.num_OOSP, 0], array2[:len(array2) - self.num_OOSP, 1], [0] * (len(array2) - self.num_OOSP)))
+            # (array2[:len(array2) - self.num_OOSP, 0], array2[:len(array2) - self.num_OOSP, 1],
+            #  [0] * (len(array2) - self.num_OOSP)))
             # R_all, t_all = rigid_transform_3D(np.transpose(stable_anchors_array), np.transpose(array1))
             # new_coords_alldata = (R_all @ np.transpose(array2)) + t_all
 
@@ -1507,8 +1508,8 @@ class RigidTransf_NPlus(RigidTransformation):
         self.stable_coords_alldata = stable_coords_alldata
         self.common_vertices_index = common_vertices_index + 1  # +1 accounts for Python's indexing starting from 0
         self.common_vertices2_index = common_vertices2_index + 1  # +1 accounts for Python's indexing starting from 0
-        return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, stable_coords_alldata, rmse_err_alldata
-
+        return anchors1, anchors2, R_anchors, t_anchors, rmse_err_anchors, stable_coords_anchors, \
+            stable_coords_alldata, rmse_err_alldata
 
     def stable_anchor_visuals(self, Ax, Ay, x_off, y_off, annotate=True, save=True):
         """
@@ -1582,7 +1583,6 @@ class RigidTransf_NPlus(RigidTransformation):
 
         plt.show()
 
-
     def stable_representation(self, title, Ax, Ay, x_off, y_off, annotate=True, save=True):
         """
         Visualizes the n+1 case for all samples with a stabilized representation obtained in the n-case.
@@ -1619,9 +1619,11 @@ class RigidTransf_NPlus(RigidTransformation):
 
         # Make plot
         fig, ax = plt.subplots()
-        ax.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0], self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
-                    marker='o', label='sample', s=50, color='white', edgecolors="black")
-        ax.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0], self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
+        ax.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
+                   self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
+                   marker='o', label='sample', s=50, color='white', edgecolors="black")
+        ax.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
+                   self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
                    marker='*', label='OOSP', color='k', s=90)
 
         if annotate:
@@ -1641,7 +1643,6 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
 
         plt.show()
-
 
     def stabilized_all_plotter(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
         if hue_ is not None:
@@ -1665,8 +1666,10 @@ class RigidTransf_NPlus(RigidTransformation):
 
             if annotate:
                 for label, x, y in zip(range(1, len(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0]) + 1),
-                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0] + self.x_off,
-                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1] + self.y_off):
+                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0]
+                                       + self.x_off,
+                                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1]
+                                       + self.y_off):
                     plt.annotate(label, (x, y), size=8, style='italic')
 
             # Aesthetics
@@ -1705,7 +1708,7 @@ class RigidTransf_NPlus(RigidTransformation):
         if hue_ is not None:
             unique_colors = [category_to_color[category] for category in categories]
             cmap = ListedColormap(unique_colors)
-            bounds =  range(num_categories + 1)
+            bounds = range(num_categories + 1)
             tick_positions = [i + 0.5 for i in bounds[:-1]]
             norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
             colorbar = plt.colorbar(plt.cm.ScalarMappable(cmap=cmap, norm=norm), ticks=tick_positions,
