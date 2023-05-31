@@ -47,6 +47,7 @@ def get_args_parser():
     return parser
 
 
+# noinspection PyUnusedLocal
 def autoresampling(dataframe, N, args):
     ######################
     # data curation
@@ -119,8 +120,8 @@ def autoresampling(dataframe, N, args):
         array1=my_points, array2=my_points_expected, hull_1=hull, hull_2=hull_expected)
 
     return np.array(list(random_seed_oosp)), np.array(list(random_seeds)), np.array(norm_stress),\
-           np.array(norm_stress2), np.array(all_rmse), np.array(all_rmse2), np.array(rmse_err_anchors), \
-           np.array(rmse_err_anchors_exp)
+        np.array(norm_stress2), np.array(all_rmse), np.array(all_rmse2), np.array(rmse_err_anchors), \
+        np.array(rmse_err_anchors_exp)
 
 
 
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     for index_, n in enumerate(N_VALUES):
         print(f"Processing N = {n}...")
         try:
-            oosp_seed, mds_seed, ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2= autoresampling(dataframe=df, N=n, args=args_) #, rmse_all1, rmse_all2
+            oosp_seed, mds_seed, ns1, ns2, rmse1, rmse2, rmse_err1, rmse_err2 = autoresampling(dataframe=df, N=n, args=args_)
             RandomSeed_oosp[index_] = oosp_seed
             RandomSeed_mds[index_] = mds_seed
             NormStress1[index_] = ns1
