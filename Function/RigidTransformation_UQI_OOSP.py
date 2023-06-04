@@ -14,7 +14,8 @@ from scipy.spatial import distance
 from scipy.stats import norm
 from shapely.geometry import Polygon
 from sklearn.manifold import MDS  # multidimensional scaling
-from sklearn.metrics.pairwise import pairwise_distances  # euclidean_distances, manhattan_distances,
+from sklearn.metrics.pairwise import pairwise_distances
+from scipy.spatial.distance import pdist, mahalanobis
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 # TURN OFF ALL GRIDS either via sns or plt.
@@ -119,7 +120,7 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
     return
 
 
-def make_levels(data, cat_response, num_response):
+def make_levels(data, cat_response, num_response, custom_bins=None):
     """
     This function assigns ordinal levels to a numerical response variable based on predefined bins.
 
@@ -132,17 +133,22 @@ def make_levels(data, cat_response, num_response):
         The column name for the new categorical response variable.
     num_response : str
         The column name for the numerical response variable.
-
+    custom_bins: list with 5 int or float elements, optional
+        Predefined bins to convert numerical response feature to categorical feature
     Returns
     -------
     DataFrame : The input DataFrame with the new categorical response variable added.
 
     """
 
-    bins = [0, 2500, 5000, 7500, 10000]  # assign the production bins (these are the fence posts)
+    if custom_bins is None:
+        bins = [0, 2500, 5000, 7500, 10000]  # assign the production bins (these are the fence posts)
+    else:
+        bins = custom_bins
+
     labels = ['low', 'med', 'high', 'vhigh']  # assign the labels
 
-    # Use pd.cut() to create the categorical response variable based on the numerical response and predefined bins
+    # Use pd.cut() to create the categorical response variable using bins
     data[cat_response] = pd.cut(data[num_response], bins, labels=labels)
     return data
 
@@ -501,7 +507,7 @@ def make_sample_within_ci(dataframe, num_OOSP):
 # noinspection PyUnboundLocalVariable
 class RigidTransformation:
     def __init__(self, df, features, idx, num_OOSP, num_realizations, base_seed, start_seed, stop_seed,
-                 dissimilarity_metric, dim_projection):
+                 dissimilarity_metric, dim_projection, custom_dij=None):
         """
         Initializes the RigidTransformation class.
 
@@ -524,9 +530,13 @@ class RigidTransformation:
         stop_seed : int
             The stopping seed value for realizations.
         dissimilarity_metric : str
-            User-specified dissimilarity metric to be used for the NDR i.e., MDS computation.
+            User-specified dissimilarity metric to be used for the NDR i.e., MDS computation from well known types in
+            pydist2.distance package or 'custom'
         dim_projection : str
             The dimension of the LDS projection (2D or 3D).
+        custom_dij : None or 1D array, optional
+            Custom computed dissimilarity metric of choice when using unique distance metric for dissimilarity
+            computations
         """
 
         self.df_idx = df.copy()
@@ -538,6 +548,7 @@ class RigidTransformation:
         self.base_seed = base_seed
         self.start_seed = start_seed
         self.stop_seed = stop_seed
+        self.custom_dij = custom_dij
         self.dissimilarity_metric = dissimilarity_metric
         self.dim_projection = dim_projection.upper()
 
@@ -588,11 +599,22 @@ class RigidTransformation:
                                  "cosine", "correlation", "spearman", "hamming", "jaccard"]
         dij_metric = self.dissimilarity_metric.lower()
 
+
         if dij_metric in dissimilarity_metrics:
-            dij = pdist1(self.df.values, dij_metric)
-            dij_matrix: None = distance.squareform(dij)
+            if dij_metric == dissimilarity_metrics[2]:
+                cov_matrix = np.cov(self.df.values.T)
+                inv_cov_matrix = np.linalg.inv(cov_matrix)
+                dij = pdist(self.df.values, metric=mahalanobis, VI=inv_cov_matrix)
+                dij_matrix: None = distance.squareform(dij)
+            else:
+                dij = pdist1(self.df.values, dij_metric)
+                dij_matrix: None = distance.squareform(dij)
+        elif dij_metric == 'custom' and self.custom_dij is not None:
+            dij = self.custom_dij
+            dij_matrix: None = distance.squareform(self.custom_dij)
+
         else:
-            raise ValueError("Use a dissimilarity metric present in pdist1 from pydist2 package")
+            raise ValueError("Use a dissimilarity metric present in pdist1 from pydist2 package or 'custom' ")
 
         for i in range(0, self.num_realizations):
             embedding_subset = MDS(dissimilarity='precomputed', n_components=2, n_init=20, max_iter=1000,
@@ -707,7 +729,8 @@ class RigidTransformation:
                     pairplot.set_title(title[i] + str(realization_idx) + " at seed " + str(self.random_seeds[i]))
 
                     # Make custom colorbar
-                    categories = self.df_idx[response].unique()
+                    #  categories = self.df_idx[response].unique()
+                    categories = self.df_idx[response].cat.categories.tolist()
                     num_categories = len(categories)
                     category_to_color = dict(zip(categories, cmap))
                     unique_colors = [category_to_color[category] for category in categories]
@@ -746,7 +769,8 @@ class RigidTransformation:
                         str(self.random_seeds[i]), fontsize=16)
 
                     # Make custom colorbar
-                    categories = self.df_idx[response].unique()
+                    #  categories = self.df_idx[response].unique()
+                    categories = self.df_idx[response].cat.categories.tolist()
                     num_categories = len(categories)
                     category_to_color = dict(zip(categories, cmap))
                     unique_colors = [category_to_color[category] for category in categories]
@@ -781,7 +805,8 @@ class RigidTransformation:
             pairplot.set_title(title[0] + str(realization_idx) + "\n at seed " + str(self.random_seeds[0]), fontsize=16)
 
             # Make custom colorbar
-            categories = self.df_idx[response].unique()
+            #  categories = self.df_idx[response].unique()
+            categories = self.df_idx[response].cat.categories.tolist()
             num_categories = len(categories)
             category_to_color = dict(zip(categories, cmap))
             unique_colors = [category_to_color[category] for category in categories]
@@ -924,7 +949,8 @@ class RigidTransformation:
             plt.legend(loc="best", fontsize=14)
 
         # Make custom colorbar
-        categories = self.df_idx[response].unique()
+        #  categories = self.df_idx[response].unique()
+        categories = self.df_idx[response].cat.categories.tolist()
         num_categories = len(categories)
         category_to_color = dict(zip(categories, palette_))
         unique_colors = [category_to_color[category] for category in categories]
@@ -1092,7 +1118,7 @@ class RigidTransformation:
             scatterplot.set_title(title, fontsize=16)
 
             # Make custom colorbar
-            categories = self.df_idx[response].unique()
+            categories = self.df_idx[response].cat.categories.tolist()
             num_categories = len(categories)
             category_to_color = dict(zip(categories, cmap))
             unique_colors = [category_to_color[category] for category in categories]
@@ -1109,7 +1135,7 @@ class RigidTransformation:
             colorbar.set_ticklabels(categories, fontsize=14)
             colorbar.set_label(response, rotation=270, labelpad=30, size=16)
 
-            plt.subplots_adjust(left=0.0, bottom=0.0, right=2.1, top=1.5, wspace=0.4, hspace=0.3)
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=2.8, top=1.5, wspace=0.3, hspace=0.3)
 
         plot_scatter(axs[0], self.all_real[r_idx][:, 0], self.all_real[r_idx][:, 1],
                      self.df_idx[response], "Base case realization at seed " + str(self.random_seeds[r_idx]))
@@ -1359,9 +1385,9 @@ class RigidTransformation:
 # noinspection PyUnboundLocalVariable,PyTypeChecker
 class RigidTransf_NPlus(RigidTransformation):
     def __init__(self, df, features, idx, num_OOSP, num_realizations, base_seed, start_seed, stop_seed,
-                 dissimilarity_metric, dim_projection):
+                 dissimilarity_metric, dim_projection, custom_dij=None):
         super().__init__(df, features, idx, num_OOSP, num_realizations, base_seed, start_seed, stop_seed,
-                         dissimilarity_metric, dim_projection)
+                         dissimilarity_metric, dim_projection, custom_dij=None)
         self.anchors1 = None
         self.anchors1 = None
         self.anchors2 = None
@@ -1647,7 +1673,8 @@ class RigidTransf_NPlus(RigidTransformation):
     def stabilized_all_plotter(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
         if hue_ is not None:
             cmap = "rocket_r" if palette_ == 1 else "bright"
-            categories = dataframe[hue_].unique()
+            categories = dataframe[hue_].cat.categories.tolist()
+            #  categories = dataframe[hue_].unique()
             num_categories = len(categories)
 
             # Define the color palette
@@ -1716,7 +1743,6 @@ class RigidTransf_NPlus(RigidTransformation):
             colorbar.set_ticklabels(categories, fontsize=14)
             colorbar.set_label(hue_, rotation=270, labelpad=30, size=16)
 
-        plt.legend(loc="best", fontsize=16)
         plt.subplots_adjust(left=0.0, bottom=0.0, right=1.2, top=1.3, wspace=0.15, hspace=0.3, )
 
         if save:

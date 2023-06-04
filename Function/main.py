@@ -32,6 +32,8 @@ def get_args_parser():
                         help="""Quantitative response feature name """)
     parser.add_argument('--cat_response', default='Np-label', type=str,
                         help="""Categorical response feature name""")
+    parser.add_argument('--custom_bins', default=None, type=float,
+                        help="""list of 5, starting with 0 used to partition numerical response to categorical""")
     parser.add_argument('--bc_idx', default=0, type=int, help="""Base case index """)
     parser.add_argument('--num_realizations', default=100, type=int, help="""Number of realizations to run code.""")
     parser.add_argument('--base_seed', default=42, type=int, help="""Seed for base case""")
@@ -39,11 +41,13 @@ def get_args_parser():
     parser.add_argument('--stop_seed', default=10000, type=int, help="""Max seed stopper for realization""")
     parser.add_argument('--idx', default='Well', type=str, help="""Sample name in knowledge domain """)
     parser.add_argument('-dm', '--dissimilarity_metric', default='euclidean', type=str,
-                        help="""Dissimilarity metric type """)
+                        help="""Dissimilarity metric type from pydist2 package or 'custom' """)
     parser.add_argument('--dim_projection', default='2D', type=str, help="""Dimensionality of LDS""")
     parser.add_argument('--num_OOSP', default=1, type=int, help="""Number of OOSP to add""")
     parser.add_argument('--make_figure', default=False, type=bool, help="""Toggle for convex hull figure""")
     parser.add_argument('--normalize_projections', default=False, type=bool, help="""Ensures scale is homogeneous""")
+    parser.add_argument('--custom_dij', default=None,
+                       type=float, help="""Custom computed 1D array dissimilarity metric""")
     return parser
 
 
@@ -53,7 +57,8 @@ def autoresampling(dataframe, N, args):
     # data curation
     #####################
     # Add category for response variable i.e., production levels for complete dataset
-    df_temp = RT.make_levels(data=dataframe, cat_response=args.cat_response, num_response=args.num_response)
+    df_temp = RT.make_levels(data=dataframe, cat_response=args.cat_response, num_response=args.num_response,
+                             custom_bins=args.custom_bins)
     df_subset1 = df_temp.iloc[:N, 1:-1]  # dataframe for n case
     df_subset2, random_seed_oosp = RT.make_sample_within_ci(df_subset1.copy(),
                                                             num_OOSP=args.num_OOSP)  # dataframe for n+1 case
@@ -65,7 +70,8 @@ def autoresampling(dataframe, N, args):
         0, args.idx, np.arange(1, len(df_subset1) + 1)
     )  # Insert well column index back into data frame for N case
 
-    df_subset2 = RT.make_levels(data=df_subset2, cat_response=args.cat_response, num_response=args.num_response)
+    df_subset2 = RT.make_levels(data=df_subset2, cat_response=args.cat_response, num_response=args.num_response,
+                                custom_bins=args.custom_bins)
 
     ######################
     # N case
@@ -73,7 +79,8 @@ def autoresampling(dataframe, N, args):
     obj1 = RT.RigidTransformation(df=df_subset1, features=args.features, num_OOSP=args.num_OOSP, idx=args.idx,
                                   num_realizations=args.num_realizations, base_seed=args.base_seed,
                                   start_seed=args.start_seed, stop_seed=args.stop_seed,
-                                  dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection)
+                                  dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection
+                                  , custom_dij=args.custom_dij)
 
     # Run rigid MDS
     random_seeds, all_real, calc_real, all_rmse, norm_stress = obj1.run_rigid_MDS(
@@ -91,7 +98,8 @@ def autoresampling(dataframe, N, args):
     obj2 = RT.RigidTransf_NPlus(df=df_subset2, features=args.features, num_OOSP=args.num_OOSP, idx=args.idx,
                                 num_realizations=args.num_realizations,
                                 base_seed=args.base_seed, start_seed=args.start_seed, stop_seed=args.stop_seed,
-                                dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection)
+                                dissimilarity_metric=args.dissimilarity_metric, dim_projection=args.dim_projection
+                                , custom_dij=args.custom_dij)
 
     # Run rigid MDS
     random_seeds2, all_real2, calc_real2, all_rmse2, norm_stress2 = obj2.run_rigid_MDS(
