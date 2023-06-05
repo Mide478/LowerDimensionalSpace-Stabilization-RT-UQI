@@ -671,7 +671,7 @@ class RigidTransformation:
         return random_seeds, all_real, calc_real, all_rmse, norm_stress
 
     # noinspection PyTypeChecker,PyShadowingNames
-    def real_plotter(self, response, r_idx, Ax, Ay, title, x_off, y_off, cmap, array2=None, annotate=True, save=True):
+    def real_plotter(self, response, r_idx, Ax, Ay, title, x_off, y_off, cmap, array2=None, n_case=True, annotate=True, save=True):
         """
         Plots the realizations.
 
@@ -695,6 +695,8 @@ class RigidTransformation:
             Color map to use for coloring the scatter plot.
         array2 : None or ndarray, optional
             Array containing stabilized points per realization for comparison. Default is None.
+        n_case : bool
+            Flag indicating whether it is an N-case scenario. Default is True.
         annotate : bool, optional
             Flag indicating whether to annotate the data points. Default is True.
         save : bool, optional
@@ -720,10 +722,32 @@ class RigidTransformation:
             for i, ax in enumerate(axs):
                 if i < subplot_nos:
                     realization_idx = r_idx[i]
-                    pairplot = sns.scatterplot(x=self.all_real[realization_idx][:, 0],
-                                               y=self.all_real[realization_idx][:, 1],
-                                               hue=self.df_idx[response], s=60, markers='o', palette=cmap,
-                                               edgecolor="black", ax=ax, legend=False)
+
+                    if n_case:
+                        pairplot = sns.scatterplot(x=self.all_real[realization_idx][:, 0],
+                                                   y=self.all_real[realization_idx][:, 1],
+                                                   hue=self.df_idx[response], s=60, markers='o', palette=cmap,
+                                                   edgecolor="black", ax=ax, legend=False)
+
+                    else:
+                        pairplot = sns.scatterplot(x=self.all_real[realization_idx][:, 0][
+                                                     :(len(self.all_real[realization_idx][:, 0])-self.num_OOSP)],
+                                                   y=self.all_real[realization_idx][:, 1][
+                                                     :(len(self.all_real[realization_idx][:, 1])-self.num_OOSP)],
+                                                   hue=self.df_idx[response][
+                                                       :(len(self.all_real[realization_idx][:, 0])-self.num_OOSP)],
+                                                   s=60, markers='o', palette=cmap, edgecolor="black", ax=ax,
+                                                   legend=False)
+
+                        pairplot = sns.scatterplot(x=self.all_real[realization_idx][:, 0][
+                                                     (len(self.all_real[realization_idx][:, 0])-self.num_OOSP):],
+                                                   y=self.all_real[realization_idx][:, 1][
+                                                     (len(self.all_real[realization_idx][:, 1])-self.num_OOSP):],
+                                                   hue=self.df_idx[response][
+                                                       (len(self.all_real[realization_idx][:, 0])-self.num_OOSP):],
+                                                   s=200, markers='*', palette=cmap, edgecolor="black", ax=ax,
+                                                   legend=False)
+
                     pairplot.set_xlabel(Ax, fontsize=16)
                     pairplot.set_ylabel(Ay, fontsize=16)
                     pairplot.set_title(title[i] + str(realization_idx) + " at seed " + str(self.random_seeds[i]))
@@ -758,14 +782,35 @@ class RigidTransformation:
             for i, ax in enumerate(axs[:-1]):
                 if i < subplot_nos - 1:
                     realization_idx = r_idx[i]
-                    pairplot = sns.scatterplot(x=self.calc_real[realization_idx][0],
-                                               y=self.calc_real[realization_idx][1],
-                                               hue=self.df_idx[response], s=60, markers='o', palette=cmap,
-                                               edgecolor="black", ax=ax, legend=False)
+
+                    if n_case:
+                        pairplot = sns.scatterplot(x=self.calc_real[realization_idx][0],
+                                                   y=self.calc_real[realization_idx][1],
+                                                   hue=self.df_idx[response], s=60, markers='o', palette=cmap,
+                                                   edgecolor="black", ax=ax, legend=False)
+                    else:
+                        pairplot = sns.scatterplot(x=self.calc_real[realization_idx][0][
+                                                     :(len(self.calc_real[realization_idx][0])-self.num_OOSP)],
+                                                   y=self.calc_real[realization_idx][1][
+                                                     :(len(self.calc_real[realization_idx][1])-self.num_OOSP)],
+                                                   hue=self.df_idx[response][
+                                                       :(len(self.calc_real[realization_idx][0])-self.num_OOSP)],
+                                                   s=60, markers='o', palette=cmap, edgecolor="black", ax=ax,
+                                                   legend=False)
+
+                        pairplot = sns.scatterplot(x=self.calc_real[realization_idx][0][
+                                                     (len(self.calc_real[realization_idx][0])-self.num_OOSP):],
+                                                   y=self.calc_real[realization_idx][1][
+                                                     (len(self.calc_real[realization_idx][1])-self.num_OOSP):],
+                                                   hue=self.df_idx[response][
+                                                       (len(self.calc_real[realization_idx][0])-self.num_OOSP):],
+                                                   s=200, markers='*', palette=cmap, edgecolor="black", ax=ax,
+                                                   legend=False)
+
                     pairplot.set_xlabel(Ax, fontsize=16)
                     pairplot.set_ylabel(Ay, fontsize=16)
                     pairplot.set_title(
-                        "Stabilized solution for " + title[i].lower() + str(realization_idx) + " \nat seed " +
+                        "Stabilized solution for " + title[i+1].lower() + str(realization_idx) + " \nat seed " +
                         str(self.random_seeds[i]), fontsize=16)
 
                     # Make custom colorbar
@@ -1068,7 +1113,7 @@ class RigidTransformation:
                         dpi=300, bbox_inches='tight')
         plt.show()
 
-    def compare_plot(self, response, r_idx, Ax, Ay, x_off, y_off, cmap, annotate=True, save=True):
+    def compare_plot(self, response, r_idx, Ax, Ay, x_off, y_off, cmap, n_case=True, annotate=True, save=True):
         """
         Plots a comparison between the base case realization and the ensemble expectation of stabilized solutions.
 
@@ -1088,6 +1133,8 @@ class RigidTransformation:
             Offset value for y-coordinate annotations.
         cmap : str or colormap object
             Colormap for the scatter plot.
+        n_case : bool
+            Flag indicating whether it is an N-case scenario. Default is True.
         annotate : bool, optional
             Flag indicating whether to annotate the data points. Default is True.
         save : bool, optional
@@ -1105,9 +1152,18 @@ class RigidTransformation:
 
         fig, axs = plt.subplots(1, 2)
 
-        def plot_scatter(ax, x, y, hue, title):
-            scatterplot = sns.scatterplot(x=x, y=y, hue=hue, s=60, markers='o', palette=cmap, edgecolor="black",
-                                          legend=False, ax=ax)
+        def plot_scatter(ax, x, y, hue, title, n_case=n_case):
+            if n_case:
+                scatterplot = sns.scatterplot(x=x, y=y, hue=hue, s=60, markers='o', palette=cmap, edgecolor="black",
+                                              legend=False, ax=ax)
+            else:
+                scatterplot = sns.scatterplot(x=x[(len(x)-self.num_OOSP):], y=y[(len(y)-self.num_OOSP):],
+                                              hue=hue[(len(x)-self.num_OOSP):], s=200, markers='*', palette=cmap,
+                                              edgecolor="black", legend=False, ax=ax)
+
+                scatterplot = sns.scatterplot(x=x[:(len(x)-self.num_OOSP)], y=y[:(len(y)-self.num_OOSP)],
+                                              hue=hue[:(len(x)-self.num_OOSP)], s=60, markers='o', palette=cmap,
+                                              edgecolor="black", legend=False, ax=ax)
 
             if annotate:
                 for i, txt in enumerate(self.df_idx[self.idx]):
@@ -1136,6 +1192,8 @@ class RigidTransformation:
             colorbar.set_label(response, rotation=270, labelpad=30, size=16)
 
             plt.subplots_adjust(left=0.0, bottom=0.0, right=2.8, top=1.5, wspace=0.3, hspace=0.3)
+
+            #  Marks the end of inner function
 
         plot_scatter(axs[0], self.all_real[r_idx][:, 0], self.all_real[r_idx][:, 1],
                      self.df_idx[response], "Base case realization at seed " + str(self.random_seeds[r_idx]))
