@@ -1729,7 +1729,8 @@ class RigidTransf_NPlus(RigidTransformation):
             if save:
                 plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
 
-            plt.show()
+            return fig
+            # plt.show()
 
     def stabilized_all_plotter(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
         if hue_ is not None:
