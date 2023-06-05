@@ -1667,7 +1667,7 @@ class RigidTransf_NPlus(RigidTransformation):
 
         plt.show()
 
-    def stable_representation(self, title, Ax, Ay, x_off, y_off, annotate=True, save=True):
+    def stable_representation(self, title, Ax, Ay, x_off, y_off, annotate=True, make_figure=True, save=True):
         """
         Visualizes the n+1 case for all samples with a stabilized representation obtained in the n-case.
         The visualization seen is invariant to rotation, translation, and reflection transformations.
@@ -1686,6 +1686,8 @@ class RigidTransf_NPlus(RigidTransformation):
             The offset value to adjust the y-coordinate of the annotations.
         annotate : bool, optional
             Indicates whether to annotate the data points. Defaults to True.
+        make_figure : bool, optional
+            Flag indicating whether to make the figure. Default is True.
         save : bool, optional
             Indicates whether to save the plot as an image file. Defaults to True.
 
@@ -1701,32 +1703,33 @@ class RigidTransf_NPlus(RigidTransformation):
         self.y_off = y_off
         self.title = title
 
-        # Make plot
-        fig, ax = plt.subplots()
-        ax.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
-                   self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
-                   marker='o', label='sample', s=50, color='white', edgecolors="black")
-        ax.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
-                   self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
-                   marker='*', label='OOSP', color='k', s=90)
+        if make_figure:
+            # Make plot
+            fig, ax = plt.subplots()
+            ax.scatter(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0],
+                       self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1],
+                       marker='o', label='sample', s=50, color='white', edgecolors="black")
+            ax.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
+                       self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
+                       marker='*', label='OOSP', color='k', s=90)
 
-        if annotate:
-            for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
-                                   self.stable_coords_alldata[:, 0] + x_off,
-                                   self.stable_coords_alldata[:, 1] + y_off):
-                ax.annotate(label, (x, y), size=8, style='italic')
+            if annotate:
+                for label, x, y in zip(range(1, len(self.stable_coords_alldata) + 1),
+                                       self.stable_coords_alldata[:, 0] + x_off,
+                                       self.stable_coords_alldata[:, 1] + y_off):
+                    ax.annotate(label, (x, y), size=8, style='italic')
 
-        # Aesthetics
-        ax.set_title(title, fontsize=14)
-        ax.set_xlabel(Ax, fontsize=14)
-        ax.set_ylabel(Ay, fontsize=14)
-        plt.legend(loc="best", fontsize=16)
-        plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
+            # Aesthetics
+            ax.set_title(title, fontsize=14)
+            ax.set_xlabel(Ax, fontsize=14)
+            ax.set_ylabel(Ay, fontsize=14)
+            plt.legend(loc="best", fontsize=16)
+            plt.subplots_adjust(left=0.0, bottom=0.0, right=1., top=1.3, wspace=0.3, hspace=0.3, )
 
-        if save:
-            plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
+            if save:
+                plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
 
-        plt.show()
+            plt.show()
 
     def stabilized_all_plotter(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
         if hue_ is not None:
