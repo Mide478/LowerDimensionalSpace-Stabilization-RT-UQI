@@ -13,7 +13,7 @@ from scipy.spatial import ConvexHull
 from scipy.spatial import distance
 from scipy.stats import norm
 from shapely.geometry import Polygon
-from sklearn.manifold import MDS  # multidimensional scaling
+from sklearn.manifold import MDS
 from sklearn.metrics.pairwise import pairwise_distances
 from scipy.spatial.distance import pdist, mahalanobis
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
@@ -74,9 +74,8 @@ def matrix_scatter(dataframe, feat_title, left_adj, bottom_adj, right_adj, top_a
 
     # For N_case visuals
     if n_case:
-        fig = sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
-                           plot_kws=dict(s=90, edgecolor="black", linewidth=0.5), hue=hue_, corner=True,
-                           palette=palette_)
+        sns.pairplot(dataframe, vars=feat_title, markers='o', diag_kws={'edgecolor': 'black'},
+                     plot_kws=dict(s=90, edgecolor="black", linewidth=0.5), hue=hue_, corner=True, palette=palette_)
 
     else:
         # Define marker type for last datapoint i.e., the additional sample in N+1 case
@@ -745,8 +744,8 @@ class RigidTransformation:
                                                      (len(self.all_real[realization_idx][:, 1])-self.num_OOSP):],
                                                    hue=self.df_idx[response][
                                                        (len(self.all_real[realization_idx][:, 0])-self.num_OOSP):],
-                                                   s=200, markers='*', palette=cmap, edgecolor="black", ax=ax,
-                                                   legend=False)
+                                                   s=200, marker='*', palette=cmap, edgecolor="black", ax=ax,
+                                                   linewidth=0.5, legend=False)
 
                     pairplot.set_xlabel(Ax, fontsize=16)
                     pairplot.set_ylabel(Ay, fontsize=16)
@@ -804,8 +803,8 @@ class RigidTransformation:
                                                      (len(self.calc_real[realization_idx][1])-self.num_OOSP):],
                                                    hue=self.df_idx[response][
                                                        (len(self.calc_real[realization_idx][0])-self.num_OOSP):],
-                                                   s=200, markers='*', palette=cmap, edgecolor="black", ax=ax,
-                                                   legend=False)
+                                                   s=200, marker='*', palette=cmap, edgecolor="black", ax=ax,
+                                                   linewidth=0.5, legend=False)
 
                     pairplot.set_xlabel(Ax, fontsize=16)
                     pairplot.set_ylabel(Ay, fontsize=16)
@@ -842,9 +841,29 @@ class RigidTransformation:
             # Add base case subplot for direct comparison of the stabilized solution obtained
             realization_idx = r_idx[subplot_nos - 1]
             ax = axs[subplot_nos - 1]
-            pairplot = sns.scatterplot(x=self.all_real[0][:, 0], y=self.all_real[0][:, 1],
-                                       hue=self.df_idx[response], s=60, markers='o', palette=cmap,
-                                       edgecolor="black", ax=ax, legend=False)
+            if n_case:
+                pairplot = sns.scatterplot(x=self.all_real[0][:, 0], y=self.all_real[0][:, 1],
+                                           hue=self.df_idx[response], s=60, markers='o', palette=cmap,
+                                           edgecolor="black", ax=ax, legend=False)
+            else:
+                pairplot = sns.scatterplot(x=self.all_real[0][:, 0][
+                                             :(len(self.all_real[0][:, 0]) - self.num_OOSP)],
+                                           y=self.all_real[0][:, 1][
+                                             :(len(self.all_real[0][:, 1]) - self.num_OOSP)],
+                                           hue=self.df_idx[response][
+                                               :(len(self.all_real[0][:, 0]) - self.num_OOSP)],
+                                           s=60, markers='o', palette=cmap, edgecolor="black", ax=ax,
+                                           legend=False)
+
+                pairplot = sns.scatterplot(x=self.all_real[0][:, 0][
+                                             (len(self.all_real[0][:, 0]) - self.num_OOSP):],
+                                           y=self.all_real[0][:, 1][
+                                             (len(self.all_real[0][:, 1]) - self.num_OOSP):],
+                                           hue=self.df_idx[response][
+                                               (len(self.all_real[0][:, 0]) - self.num_OOSP):],
+                                           s=200, marker='*', palette=cmap, edgecolor="black", ax=ax,
+                                           linewidth=0.5, legend=False)
+
             pairplot.set_xlabel(Ax, fontsize=16)
             pairplot.set_ylabel(Ay, fontsize=16)
             pairplot.set_title(title[0] + str(realization_idx) + "\n at seed " + str(self.random_seeds[0]), fontsize=16)
@@ -1153,21 +1172,21 @@ class RigidTransformation:
         fig, axs = plt.subplots(1, 2)
 
         def plot_scatter(ax, x, y, hue, title, n_case=n_case):
-            if n_case:
-                scatterplot = sns.scatterplot(x=x, y=y, hue=hue, s=60, markers='o', palette=cmap, edgecolor="black",
+            if n_case is True:
+                scatterplot = sns.scatterplot(x=x, y=y, hue=hue, s=70, markers='o', palette=cmap, edgecolor="black",
                                               legend=False, ax=ax)
             else:
-                scatterplot = sns.scatterplot(x=x[(len(x)-self.num_OOSP):], y=y[(len(y)-self.num_OOSP):],
-                                              hue=hue[(len(x)-self.num_OOSP):], s=200, markers='*', palette=cmap,
+                scatterplot = sns.scatterplot(x=x[:(len(x)-self.num_OOSP)], y=y[:(len(y)-self.num_OOSP)],
+                                              hue=hue[:(len(x)-self.num_OOSP)], s=70, markers='o', palette=cmap,
                                               edgecolor="black", legend=False, ax=ax)
 
-                scatterplot = sns.scatterplot(x=x[:(len(x)-self.num_OOSP)], y=y[:(len(y)-self.num_OOSP)],
-                                              hue=hue[:(len(x)-self.num_OOSP)], s=60, markers='o', palette=cmap,
-                                              edgecolor="black", legend=False, ax=ax)
+                scatterplot = sns.scatterplot(x=x[(len(x)-self.num_OOSP):], y=y[(len(y)-self.num_OOSP):],
+                                              hue=hue[(len(x)-self.num_OOSP):], s=400, marker='*', palette=cmap,
+                                              edgecolor="black", legend=False, ax=ax, linewidth=1)
 
             if annotate:
                 for i, txt in enumerate(self.df_idx[self.idx]):
-                    scatterplot.annotate(txt, (x[i] + x_off, y[i] + y_off), size=10, style='italic')
+                    scatterplot.annotate(txt, (x[i] + x_off, y[i] + y_off), size=12, style='italic')
 
             scatterplot.set_xlabel(Ax, fontsize=16)
             scatterplot.set_ylabel(Ay, fontsize=16)
@@ -1238,14 +1257,14 @@ class RigidTransformation:
         stabilized_expected_proj = np.transpose(array[:2, :]) if expectation_compute else array.copy()
 
         #  Distance calculation based on norm_type
-        if norm_type.upper() == 'L2':
+        if norm_type.upper() == 'L1':
             # dists = manhattan_distances(self.df).ravel()
             # nonzero = dists != 0
             # dists = dists[nonzero]
             # projected_dists = manhattan_distances(stabilized_expected_proj).ravel()[nonzero]
             dists = pairwise_distances(self.df, metric='manhattan').ravel()
             projected_dists = pairwise_distances(stabilized_expected_proj, metric='manhattan').ravel()
-        elif norm_type.upper() == 'L1':
+        elif norm_type.upper() == 'L2':
             # dists = euclidean_distances(self.df, squared=False).ravel()
             # nonzero = dists != 0
             # dists = dists[nonzero]
@@ -1361,7 +1380,7 @@ class RigidTransformation:
                 #  For OOSP included case
                 plt.scatter(my_points[:-num_OOSP, 0], my_points[:-num_OOSP, 1], marker='o', s=50, color='white',
                             label='sample', edgecolors="black")
-                plt.scatter(my_points[-num_OOSP:, 0], my_points[-num_OOSP:, 1], marker='*', s=90, color='black',
+                plt.scatter(my_points[-num_OOSP:, 0], my_points[-num_OOSP:, 1], marker='*', s=100, color='black',
                             label='OOSP', edgecolors="black")
 
             if annotate:
@@ -1667,6 +1686,7 @@ class RigidTransf_NPlus(RigidTransformation):
 
         plt.show()
 
+    # noinspection PyAttributeOutsideInit
     def stable_representation(self, title, Ax, Ay, x_off, y_off, annotate=True, make_figure=True, save=True):
         """
         Visualizes the n+1 case for all samples with a stabilized representation obtained in the n-case.
@@ -1703,6 +1723,7 @@ class RigidTransf_NPlus(RigidTransformation):
         self.y_off = y_off
         self.title = title
 
+
         if make_figure:
             # Make plot
             fig, ax = plt.subplots()
@@ -1729,8 +1750,7 @@ class RigidTransf_NPlus(RigidTransformation):
             if save:
                 plt.savefig('Stabilized N+1 case with same representation as N case.tiff', dpi=300, bbox_inches='tight')
 
-            return fig
-            # plt.show()
+            plt.show()
 
     def stabilized_all_plotter(self, dataframe, hue_, palette_, annotate=True, n_case=True, save=True):
         if hue_ is not None:
@@ -1778,7 +1798,7 @@ class RigidTransf_NPlus(RigidTransformation):
             plt.scatter(self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 0],
                         self.stable_coords_alldata[(len(self.stable_coords_alldata) - self.num_OOSP):, 1],
                         marker='*',
-                        s=200, linewidths=0.5,
+                        s=300, linewidths=0.5,
                         c=scatter_colors[(len(self.stable_coords_alldata) - self.num_OOSP):],
                         edgecolors="black")
 
@@ -1809,4 +1829,133 @@ class RigidTransf_NPlus(RigidTransformation):
 
         if save:
             plt.savefig(self.title + '.tiff', dpi=300, bbox_inches='tight')
+        plt.show()
+
+
+    def stabilized_kriging_plotter(self, xcol, ycol, kriging_response_euclidean, kriging_response_mds, subplot_titles,
+                                   x_labels, y_labels, cb_title, cmap, offset_eucl_x=(1, 1), offset_eucl_y=(1, 1),
+                                   offset_mds_x=(1, 1), offset_mds_y=(1, 1), n_case=True, save=True):
+        """
+        Visualizes the sample placements on the kriged surface of the response feature in both feature and MDS spaces
+        with or without OOSP's depending on the case applied.
+
+        Arguments
+        ---------
+        xcol : str
+            this
+        ycol : str
+            this
+        kriging_response_euclidean : ndarray
+            kriged response in feature space
+        kriging_response_mds : ndarray
+            kriged response in MDS space
+        subplot_titles : list
+            A list comprising two elements with type string representing the titles of the subplots made for figures
+            in the feature and MDS (LDS) spaces.
+        x_labels : list
+            A list comprising two elements with type string representing the x-labels of the subplots made in feature
+            and MDS spaces, respectively.
+        y_labels : list
+            A list comprising two elements with type string representing the y-labels of the subplots made in feature
+            and MDS spaces, respectively.
+        cb_title : str
+            A string representing the title of the color bar.
+        cmap : str
+            String that assigns a colormap of the values displayed from matplotlib.pyplot.cm.
+        n_case: bool
+            Flag indicating whether it is an N-case scenario. Default is True.
+        save : bool, optional
+            Indicates whether to save the plot as an image file. Defaults to True.
+        offset_eucl_x, offset_eucl_y: tuple
+            multiplier to adjust axes in Eucldean space in x and y coordinates respectively.
+        offset_mds_x, offset_mds_y: tuple
+            multiplier to adjust axes in MDS (LDS) space in x' and y' coordinates respectively.
+
+        Returns
+        -------
+        None
+        """
+        k1min = kriging_response_euclidean.min()
+        k2min = kriging_response_mds.min()
+        k1max = kriging_response_euclidean.max()
+        k2max = kriging_response_mds.max()
+
+        # Create extent for background map and joint color bar for the subplots using X,Y coordinates
+        # Feature Space
+        xmin = self.df_idx[xcol].min() * offset_eucl_x[0]
+        xmax = self.df_idx[xcol].max() * offset_eucl_x[1]
+        ymin = self.df_idx[ycol].min() * offset_eucl_y[0]
+        ymax = self.df_idx[ycol].max() * offset_eucl_y[1]
+
+        # MDS Space
+        xmin2 = np.min(self.stable_coords_alldata[:, 0]) * offset_mds_x[0]
+        xmax2 = np.max(self.stable_coords_alldata[:, 0]) * offset_mds_x[1]
+        ymin2 = np.min(self.stable_coords_alldata[:, 1]) * offset_mds_y[0]
+        ymax2 = np.max(self.stable_coords_alldata[:, 1]) * offset_mds_y[1]
+
+        # Make dataframe for stabilized samples in LDS
+        df_lds = pd.DataFrame(self.stable_coords_alldata, columns=[xcol, ycol])
+
+        # Obtain input for plot making
+        Xmins = [xmin, xmin2]
+        Xmaxs = [xmax, xmax2]
+        Ymins = [ymin, ymin2]
+        Ymaxs = [ymax, ymax2]
+        Vmin = [k1min, k2min]
+        Vmax = [k1max, k2max]
+        K = [kriging_response_euclidean, kriging_response_mds]
+        df_list = [self.df_idx, df_lds]
+        X = [xcol, xcol]
+        Y = [ycol, ycol]
+
+        fig, axs = plt.subplots(nrows=1, ncols=2)
+
+        # For plot making
+        for j in range(0, len(K)):
+            ax = axs[j]
+
+            im1 = ax.imshow(K[j], vmin=Vmin[j], vmax=Vmax[j], extent=(Xmins[j], Xmaxs[j], Ymins[j], Ymaxs[j]), aspect=1,
+                            cmap=cmap, interpolation=None, origin='lower')
+
+            if n_case:
+                ax.scatter(df_list[j][X[j]][:-self.num_OOSP], df_list[j][Y[j]][:-self.num_OOSP], c='white', s=60,
+                           alpha=1.0, linewidths=1.0, edgecolors="black", label='sample')
+            else:
+                ax.scatter(
+                    df_list[j][X[j]][:(len(df_list[j]) - self.num_OOSP)],
+                    df_list[j][Y[j]][:(len(df_list[j]) - self.num_OOSP)],
+                    c='white',
+                    s=60,
+                    alpha=1.0,
+                    linewidths=1.0,
+                    edgecolors="black",
+                    label='sample'
+                )
+                ax.scatter(
+                    df_list[j][X[j]][(len(df_list[j]) - self.num_OOSP):],
+                    df_list[j][Y[j]][(len(df_list[j]) - self.num_OOSP):],
+                    marker='*',
+                    c='white',
+                    s=400,
+                    alpha=1.0,
+                    linewidths=1.0,
+                    edgecolors="black", label='OOSP'
+                )
+
+            ax.legend(fontsize=12)
+            ax.set_aspect('auto')
+            ax.set_title(subplot_titles[j], size=14)
+            ax.set_xlabel(x_labels[j], size=14)
+            ax.set_ylabel(y_labels[j], size=14)
+            ax.tick_params(axis='both', which='major', labelsize=12)
+
+        # Aesthetics for plot
+        plt.subplots_adjust(left=0.0, bottom=0.0, right=1.9, top=1.3, wspace=0.25, hspace=0.3)
+        cbar_ax = fig.add_axes([1.97, 0., 0.04, 1.3])  # Left, bottom, width, length
+        cbar = fig.colorbar(im1, cax=cbar_ax)
+        cbar.ax.tick_params(labelsize=12)
+        cbar.set_label(cb_title, rotation=270, labelpad=20, size=14)
+
+        if save:
+            plt.savefig(subplot_titles[0] + '.tif', dpi=300, bbox_inches='tight')
         plt.show()
