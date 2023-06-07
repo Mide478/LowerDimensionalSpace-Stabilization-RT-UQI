@@ -558,6 +558,7 @@ class RigidTransformation:
         self.norm_stress = None
         self.array_exp = None
 
+    # noinspection PyTypeChecker
     def run_rigid_MDS(self, normalize_projections=True):
         """
         Runs the Rigid MDS algorithm for generating realizations.
