@@ -453,7 +453,7 @@ def rmse(array1, array2):
     return rmse_error
 
 
-def make_sample_within_ci(dataframe, num_OOSP):
+def make_sample_within_ci(dataframe, num_OOSP, random_state=None):
     """
     Sample a single row from a dataframe of multiple columns such that it is within a 95% confidence interval (CI).
 
@@ -486,10 +486,14 @@ def make_sample_within_ci(dataframe, num_OOSP):
     # Generate random values within 95% CI for each column
     samples = []
     while len(samples) < num_OOSP:
-        random_seed = np.random.randint(0, 100000)
-        if random_seed not in random_seeds:
-            np.random.seed(random_seed)
-            random_seeds.add(random_seed)
+        if random_seeds is None:
+            random_seed = np.random.randint(0, 100000)
+            if random_seed not in random_seeds:
+                np.random.seed(random_seed)
+                random_seeds.add(random_seed)
+        else:
+            random_seeds = random_state
+            np.random.seed(random_seeds)
 
         # Generate random values within 95% CI for each column
         sample = np.random.uniform(lower_bounds, upper_bounds)
@@ -1121,7 +1125,7 @@ class RigidTransformation:
 
         #  Aesthetics
         plt.legend(loc="best", fontsize=14)
-        plt.xlabel('Projections', fontsize=14)
+        plt.xlabel('MDS 1, MDS 2', fontsize=14)
         plt.ylabel('Density', fontsize=14)
         plt.xlim(xmin, xmax)
         plt.ylim(ymin, ymax)
@@ -1775,7 +1779,8 @@ class RigidTransf_NPlus(RigidTransformation):
                         edgecolors="black")
 
             if annotate:
-                for label, x, y in zip(range(1, len(self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0]) + 1),
+                for label, x, y in zip(range(1, len(self.stable_coords_alldata[
+                                                    :len(self.stable_coords_alldata) - self.num_OOSP, 0]) + 1),
                                        self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 0]
                                        + self.x_off,
                                        self.stable_coords_alldata[:len(self.stable_coords_alldata) - self.num_OOSP, 1]
