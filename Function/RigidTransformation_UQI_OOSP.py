@@ -713,7 +713,7 @@ class RigidTransformation:
         plt.rcdefaults()
 
         if self.all_real is None:
-            raise TypeError("Run rung_rigid_MDS first.")
+            raise TypeError("Run run_rigid_MDS first.")
 
         subplot_nos = len(r_idx)
         num_cols = 2
@@ -724,6 +724,7 @@ class RigidTransformation:
 
         if array2 is None:
             for i, ax in enumerate(axs):
+                # ax.set_xlim(-2.2, 2.2)
                 if i < subplot_nos:
                     realization_idx = r_idx[i]
 
@@ -754,7 +755,8 @@ class RigidTransformation:
 
                     pairplot.set_xlabel(Ax, fontsize=16)
                     pairplot.set_ylabel(Ay, fontsize=16)
-                    pairplot.set_title(title[i] + str(realization_idx) + " at seed " + str(self.random_seeds[i]))
+                    pairplot.set_title(title[i] + str(realization_idx) + " at seed " + str(self.random_seeds[i])
+                                       ,fontsize=16)
 
                     # Make custom colorbar
                     #  categories = self.df_idx[response].unique()
@@ -784,6 +786,7 @@ class RigidTransformation:
 
         else:
             for i, ax in enumerate(axs[:-1]):
+                # ax.set_xlim(-2.2, 2.2)
                 if i < subplot_nos - 1:
                     realization_idx = r_idx[i]
 
@@ -814,8 +817,8 @@ class RigidTransformation:
                     pairplot.set_xlabel(Ax, fontsize=16)
                     pairplot.set_ylabel(Ay, fontsize=16)
                     pairplot.set_title(
-                        "Stabilized solution for " + title[i+1].lower() + str(realization_idx) + " \nat seed " +
-                        str(self.random_seeds[i]), fontsize=16)
+                        "Stabilized solution for " + title[i+1].lower() + str(r_idx[i+1]) + " \nat seed " +
+                        str(self.random_seeds[i+1]), fontsize=16)
 
                     # Make custom colorbar
                     #  categories = self.df_idx[response].unique()
@@ -846,6 +849,7 @@ class RigidTransformation:
             # Add base case subplot for direct comparison of the stabilized solution obtained
             realization_idx = r_idx[subplot_nos - 1]
             ax = axs[subplot_nos - 1]
+            ax.set_xlim(-2.2, 2.2)
             if n_case:
                 pairplot = sns.scatterplot(x=self.all_real[0][:, 0], y=self.all_real[0][:, 1],
                                            hue=self.df_idx[response], s=60, markers='o', palette=cmap,
@@ -871,7 +875,7 @@ class RigidTransformation:
 
             pairplot.set_xlabel(Ax, fontsize=16)
             pairplot.set_ylabel(Ay, fontsize=16)
-            pairplot.set_title(title[0] + str(realization_idx) + "\n at seed " + str(self.random_seeds[0]), fontsize=16)
+            pairplot.set_title(title[0] + str(r_idx[0]) + "\n at seed " + str(self.random_seeds[0]), fontsize=16)
 
             # Make custom colorbar
             #  categories = self.df_idx[response].unique()
