@@ -5,11 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b18fe45-7761-4a70-8f51-e562bb11bbfe" name="Changes" comment="Updated">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Function/RigidTransformation_UQI_OOSP.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Function/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/Function/RigidTransformation_UQI_OOSP.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Function/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/LD_Stabilization.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/LD_Stabilization.iml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,7 +48,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "last_opened_file_path": "/Users/ademidemabadeje/Documents/UT/Research/PyCharm/LD_Stabilization/Fall 2022/Notebooks/Workflows",
+    "last_opened_file_path": "/Users/ademidemabadeje/Documents/UT/Research/PyCharm/LD_Stabilization",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -61,11 +59,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/Fall 2022/Notebooks/Workflows" />
       <recent name="$PROJECT_DIR$/Fall 2022/Notebooks/Current" />
       <recent name="$PROJECT_DIR$/Realization results OOSP" />
       <recent name="$PROJECT_DIR$/Function" />
-      <recent name="$PROJECT_DIR$/Fall 2022/Notebooks" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -216,21 +214,7 @@
       <workItem from="1707366927837" duration="252000" />
       <workItem from="1707367665222" duration="3395000" />
       <workItem from="1707708406618" duration="2220000" />
-      <workItem from="1710548164339" duration="7778000" />
-    </task>
-    <task id="LOCAL-00024" summary="Updated Notebook Prototype">
-      <created>1679092557827</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1679092557827</updated>
-    </task>
-    <task id="LOCAL-00025" summary="Updated Notebook Prototype">
-      <created>1679107206788</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1679107206788</updated>
+      <workItem from="1710548164339" duration="8088000" />
     </task>
     <task id="LOCAL-00026" summary="Updated Notebook Prototype">
       <created>1679224207708</created>
@@ -561,7 +545,21 @@
       <option name="project" value="LOCAL" />
       <updated>1710554240094</updated>
     </task>
-    <option name="localTasksCounter" value="73" />
+    <task id="LOCAL-00073" summary="Updated">
+      <created>1710558242586</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1710558242594</updated>
+    </task>
+    <task id="LOCAL-00074" summary="Updated">
+      <created>1710558345323</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1710558345324</updated>
+    </task>
+    <option name="localTasksCounter" value="75" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
