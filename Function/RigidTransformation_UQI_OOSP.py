@@ -1941,6 +1941,7 @@ class RigidTransf_NPlus(RigidTransformation):
                     edgecolors="black",
                     label='sample'
                 )
+
                 ax.scatter(
                     df_list[j][X[j]][(len(df_list[j]) - self.num_OOSP):],
                     df_list[j][Y[j]][(len(df_list[j]) - self.num_OOSP):],
