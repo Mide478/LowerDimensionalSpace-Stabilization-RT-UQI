@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7b18fe45-7761-4a70-8f51-e562bb11bbfe" name="Changes" comment="Updated">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Function/RigidTransformation_UQI_OOSP.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Function/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Jupyter Notebook" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectId" id="2HYc0lq5UNr02JKnf73cww2Bpqs" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "last_opened_file_path": "/Users/ademidemabadeje/Documents/UT/Research/PyCharm/LD_Stabilization/Fall 2022/Notebooks/Workflows",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Fall 2022/Notebooks/Workflows" />
+      <recent name="$PROJECT_DIR$/Fall 2022/Notebooks/Current" />
+      <recent name="$PROJECT_DIR$/Realization results OOSP" />
+      <recent name="$PROJECT_DIR$/Function" />
+      <recent name="$PROJECT_DIR$/Fall 2022/Notebooks" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/Fall 2022/Results" />
+      <recent name="$PROJECT_DIR$/Realization results OOSP/Duvernay" />
+      <recent name="$PROJECT_DIR$/Fall 2022/Notebooks/Past notebooks" />
+      <recent name="$PROJECT_DIR$/Realization results OOSP/Different D's/Mahalanobis" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.main">
+    <configuration name="Configuration" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="LD_Stabilization" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Fall 2022/Notebooks/Standardize all before runs" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Fall 2022/Notebooks/Configuration.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <module name="LD_Stabilization" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python">
+      <module name="LD_Stabilization" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="$PROJECT_DIR$/venv/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Realization results OOSP" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Function/main.py" />
+      <option name="PARAMETERS" value="--N_start 4 --N_end 6 --N_step 1 --num_OOSP 1 --dissimilarity_metric mahalanobis --dataset to_use.csv" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.main" />
+      <item itemvalue="Python.Configuration" />
+    </list>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7b18fe45-7761-4a70-8f51-e562bb11bbfe" name="Changes" comment="" />
+      <created>1668465236636</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1668465236636</updated>
+      <workItem from="1668465240153" duration="10000" />
+      <workItem from="1668722440502" duration="379000" />
+      <workItem from="1669068875568" duration="2912000" />
+      <workItem from="1669895507470" duration="37276000" />
+      <workItem from="1669968395972" duration="3582000" />
+      <workItem from="1670872113512" duration="27618000" />
+      <workItem from="1670953421213" duration="9755000" />
+      <workItem from="1671040800971" duration="61541000" />
+      <workItem from="1671822994270" duration="2356000" />
+      <workItem from="1675962642945" duration="66828000" />
+      <workItem from="1676563077602" duration="20186000" />
+      <workItem from="1677184630789" duration="8338000" />
+      <workItem from="1678141769255" duration="697000" />
+      <workItem from="1678465506018" duration="8217000" />
+      <workItem from="1678892466233" duration="62000" />
+      <workItem from="1678990777014" duration="113652000" />
+      <workItem from="1679347034759" duration="36340000" />
+      <workItem from="1679583187445" duration="10768000" />
+      <workItem from="1680172291914" duration="642000" />
+      <workItem from="1680543759334" duration="33000" />
+      <workItem from="1680761583139" duration="16000" />
+      <workItem from="1680793394703" duration="1790000" />
+      <workItem from="1681380725101" duration="148000" />
+      <workItem from="1681411638638" duration="2249000" />
+      <workItem from="1681413940438" duration="7948000" />
+      <workItem from="1681762260676" duration="31000" />
+      <workItem from="1682091113248" duration="5120000" />
+      <workItem from="1682638952077" duration="1050000" />
+      <workItem from="1683300257140" duration="742000" />
+      <workItem from="1683343118526" duration="678000" />
+      <workItem from="1683683272740" duration="243000" />
+      <workItem from="1684083070512" duration="42978000" />
+      <workItem from="1684251997332" duration="74579000" />
+      <workItem from="1684387811303" duration="129742000" />
+      <workItem from="1685475147196" duration="23111000" />
+      <workItem from="1685499230409" duration="75367000" />
+      <workItem from="1685950530113" duration="37255000" />
+      <workItem from="1686068260345" duration="22674000" />
+      <workItem from="1686239516661" duration="23618000" />
+      <workItem from="1686283286396" duration="163000" />
+      <workItem from="1686321034941" duration="287000" />
+      <workItem from="1686329175014" duration="14228000" />
+      <workItem from="1686843310916" duration="33958000" />
+      <workItem from="1687753204553" duration="777000" />
+      <workItem from="1687797583012" duration="6201000" />
+      <workItem from="1689119127738" duration="23000" />
+      <workItem from="1689828949937" duration="237000" />
+      <workItem from="1689829625386" duration="677000" />
+      <workItem from="1690126531818" duration="82000" />
+      <workItem from="1690256681268" duration="34000" />
+      <workItem from="1691109879606" duration="31000" />
+      <workItem from="1691115032075" duration="777000" />
+      <workItem from="1691158494373" duration="33000" />
+      <workItem from="1692036427383" duration="490000" />
+      <workItem from="1692135550318" duration="177000" />
+      <workItem from="1692136249911" duration="677000" />
+      <workItem from="1705123702851" duration="85000" />
+      <workItem from="1707366420904" duration="56000" />
+      <workItem from="1707366927837" duration="252000" />
+      <workItem from="1707367665222" duration="3395000" />
+      <workItem from="1707708406618" duration="2220000" />
+      <workItem from="1710548164339" duration="7778000" />
+    </task>
+    <task id="LOCAL-00024" summary="Updated Notebook Prototype">
+      <created>1679092557827</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1679092557827</updated>
+    </task>
+    <task id="LOCAL-00025" summary="Updated Notebook Prototype">
+      <created>1679107206788</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1679107206788</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Updated Notebook Prototype">
+      <created>1679224207708</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1679224207708</updated>
+    </task>
+    <task id="LOCAL-00027" summary="Updated Notebook Prototype">
+      <created>1679352383995</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1679352383995</updated>
+    </task>
+    <task id="LOCAL-00028" summary="Updated Notebook Prototype">
+      <created>1679792227881</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1679792227881</updated>
+    </task>
+    <task id="LOCAL-00029" summary="Updated Notebook Prototype">
+      <created>1681421587950</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1681421587950</updated>
+    </task>
+    <task id="LOCAL-00030" summary="Updated Notebook Prototype">
+      <created>1684190799064</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1684190799064</updated>
+    </task>
+    <task id="LOCAL-00031" summary="Updated Notebook Prototype">
+      <created>1684271574539</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1684271574539</updated>
+    </task>
+    <task id="LOCAL-00032" summary="Updated Notebook Prototype">
+      <created>1684298561444</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1684298561444</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Updated Notebook Prototype">
+      <created>1684304574087</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1684304574087</updated>
+    </task>
+    <task id="LOCAL-00034" summary="Updated Notebook Prototype">
+      <created>1684334583297</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1684334583297</updated>
+    </task>
+    <task id="LOCAL-00035" summary="Updated Notebook Prototype">
+      <created>1684350682353</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1684350682353</updated>
+    </task>
+    <task id="LOCAL-00036" summary="Updated Notebook Prototype">
+      <created>1684354954526</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1684354954526</updated>
+    </task>
+    <task id="LOCAL-00037" summary="Updated Notebook Prototype">
+      <created>1684387664787</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1684387664787</updated>
+    </task>
+    <task id="LOCAL-00038" summary="Updated Notebook Prototype">
+      <created>1684467784515</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1684467784515</updated>
+    </task>
+    <task id="LOCAL-00039" summary="Updated Notebook Prototype">
+      <created>1684470682266</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1684470682266</updated>
+    </task>
+    <task id="LOCAL-00040" summary="Updated Notebook Prototype">
+      <created>1684476965525</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1684476965526</updated>
+    </task>
+    <task id="LOCAL-00041" summary="Updated Notebook Prototype">
+      <created>1684635163390</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1684635163390</updated>
+    </task>
+    <task id="LOCAL-00042" summary="Updated Notebook Prototype">
+      <created>1684639803541</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1684639803541</updated>
+    </task>
+    <task id="LOCAL-00043" summary="Updated Notebook Prototype">
+      <created>1684641847628</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1684641847628</updated>
+    </task>
+    <task id="LOCAL-00044" summary="Updated Notebook Prototype">
+      <created>1684642590160</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1684642590160</updated>
+    </task>
+    <task id="LOCAL-00045" summary="Updated Notebook Prototype">
+      <created>1684643199222</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1684643199222</updated>
+    </task>
+    <task id="LOCAL-00046" summary="Updated Notebook Prototype">
+      <created>1684686948229</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1684686948229</updated>
+    </task>
+    <task id="LOCAL-00047" summary="Updated Notebook Prototype">
+      <created>1684688173590</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1684688173590</updated>
+    </task>
+    <task id="LOCAL-00048" summary="Updated Notebook Prototype">
+      <created>1684709347832</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1684709347832</updated>
+    </task>
+    <task id="LOCAL-00049" summary="Updated Notebook Prototype">
+      <created>1684710578305</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1684710578305</updated>
+    </task>
+    <task id="LOCAL-00050" summary="Updated Notebook Prototype">
+      <created>1684717010856</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1684717010858</updated>
+    </task>
+    <task id="LOCAL-00051" summary="Updated Notebook Prototype">
+      <created>1684720206853</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1684720206853</updated>
+    </task>
+    <task id="LOCAL-00052" summary="Updated Notebook Prototype">
+      <created>1684739529555</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1684739529556</updated>
+    </task>
+    <task id="LOCAL-00053" summary="Updated Notebook Prototype">
+      <created>1684752560366</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1684752560366</updated>
+    </task>
+    <task id="LOCAL-00054" summary="Updated Notebook Prototype">
+      <created>1685498280831</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1685498280831</updated>
+    </task>
+    <task id="LOCAL-00055" summary="Updated Notebook Prototype">
+      <created>1685499275363</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1685499275363</updated>
+    </task>
+    <task id="LOCAL-00056" summary="Updated Notebook Prototype">
+      <created>1685499348565</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1685499348565</updated>
+    </task>
+    <task id="LOCAL-00057" summary="Updated Notebook Prototype">
+      <created>1685499910999</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1685499910999</updated>
+    </task>
+    <task id="LOCAL-00058" summary="Updated Notebook Prototype">
+      <created>1685918244240</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1685918244241</updated>
+    </task>
+    <task id="LOCAL-00059" summary="Updated Notebook Prototype">
+      <created>1685934238466</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1685934238467</updated>
+    </task>
+    <task id="LOCAL-00060" summary="Updated Notebook Prototype">
+      <created>1685949713346</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1685949713346</updated>
+    </task>
+    <task id="LOCAL-00061" summary="Updated Notebook Prototype">
+      <created>1685954480463</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1685954480464</updated>
+    </task>
+    <task id="LOCAL-00062" summary="Updated Notebook Prototype">
+      <created>1686093703523</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1686093703523</updated>
+    </task>
+    <task id="LOCAL-00063" summary="Updated Notebook Prototype">
+      <created>1686099510920</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1686099510920</updated>
+    </task>
+    <task id="LOCAL-00064" summary="Updated Notebook Prototype">
+      <created>1686105392651</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1686105392651</updated>
+    </task>
+    <task id="LOCAL-00065" summary="Updated Notebook Prototype">
+      <created>1687803493846</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1687803493847</updated>
+    </task>
+    <task id="LOCAL-00066" summary="Updated">
+      <created>1710551800040</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1710551800063</updated>
+    </task>
+    <task id="LOCAL-00067" summary="Updated">
+      <created>1710552149959</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1710552149960</updated>
+    </task>
+    <task id="LOCAL-00068" summary="Updated">
+      <created>1710552181656</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1710552181658</updated>
+    </task>
+    <task id="LOCAL-00069" summary="Updated">
+      <created>1710552641674</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1710552641678</updated>
+    </task>
+    <task id="LOCAL-00070" summary="Updated">
+      <created>1710552868317</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1710552868319</updated>
+    </task>
+    <task id="LOCAL-00071" summary="Updated">
+      <created>1710553018647</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1710553018648</updated>
+    </task>
+    <task id="LOCAL-00072" summary="Updated">
+      <created>1710554240091</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1710554240094</updated>
+    </task>
+    <option name="localTasksCounter" value="73" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Code cleaning" />
+    <MESSAGE value="Updated Codes" />
+    <MESSAGE value="Updated Notebook Prototype" />
+    <MESSAGE value="Updated" />
+    <option name="LAST_COMMIT_MESSAGE" value="Updated" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/LD_Stabilization$Configuration.coverage" NAME="Configuration Coverage Results" MODIFIED="1681412943663" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Fall 2022/Notebooks/Standardize all before runs" />
+    <SUITE FILE_PATH="coverage/LD_Stabilization$main.coverage" NAME="main Coverage Results" MODIFIED="1685479726702" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Realization results N+1" />
+  </component>
+</project>
