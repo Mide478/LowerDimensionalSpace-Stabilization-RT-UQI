@@ -1,8 +1,7 @@
-folder_to_exclude/Before Fall 2022
-folder_to_exclude/Fall 2022/Past Scripts
-folder_to_exclude/Fall 2022/Results
-folder_to_exclude/Fall 2022/Data
-folder_to_exclude/Fall 2022/Notebooks/Past notebooks
-folder_to_exclude/Fall 2022/Notebooks/Standardize all before runs
-folder_to_exclude/Fall 2022/Notebooks/Standardize subset as needed
-folder_to_exclude/venv
+/Fall 2022/Data/
+/Fall 2022/Results/
+/Before Fall 2022/
+/Fall 2022/Past Scripts/
+/Fall 2022/Notebooks/Past notebooks/
+/Fall 2022/Notebooks/Standardize all before runs/
+/Fall 2022/Notebooks/Standardize subset as needed/
